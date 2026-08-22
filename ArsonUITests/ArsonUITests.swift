@@ -42,6 +42,9 @@ final class ArsonUITests: XCTestCase {
                elementType == .cell || elementType == .outlineRow {
                 return true
             }
+            if let element = issue.element {
+                print("Unhandled accessibility audit issue: \(issue.compactDescription)\n\(element.debugDescription)")
+            }
             return false
         }
     }
