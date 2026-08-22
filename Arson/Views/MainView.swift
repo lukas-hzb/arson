@@ -125,6 +125,8 @@ private struct PresetRow: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(preset.name.isEmpty ? String(localized: "preset.untitled") : preset.name)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
                     .lineLimit(1)
                 if let shortcut = preset.shortcut {
                     Text(shortcut.displayValue)
