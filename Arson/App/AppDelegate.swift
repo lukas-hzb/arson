@@ -52,6 +52,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 defer: false
             )
             window.title = "Arson"
+            window.titleVisibility = .hidden
             window.contentMinSize = NSSize(width: 720, height: 480)
             window.isReleasedWhenClosed = false
             window.identifier = NSUserInterfaceItemIdentifier("ArsonMainWindow")
