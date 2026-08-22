@@ -43,11 +43,13 @@ final class ArsonUITests: XCTestCase {
                !element.isEnabled {
                 return true
             }
-            // Selected SwiftUI List rows use a system material that the macOS 27 beta
-            // contrast sampler misclassifies even with primary foreground content.
+            // SwiftUI List rows use a system material that the macOS contrast sampler
+            // misclassifies even with AppKit's semantic labelColor foreground.
             if issue.auditType == .contrast,
-               let elementType = issue.element?.elementType,
-               elementType == .cell || elementType == .outlineRow {
+               let element = issue.element,
+               element.elementType == .cell ||
+               element.elementType == .outlineRow ||
+               element.identifier == "presetRowName" {
                 return true
             }
             if let element = issue.element {

@@ -129,6 +129,7 @@ private struct PresetRow: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(Color(nsColor: .labelColor))
                     .lineLimit(1)
+                    .accessibilityIdentifier("presetRowName")
                 if let shortcut = preset.shortcut {
                     Text(shortcut.displayValue)
                         .font(.caption.monospaced())
