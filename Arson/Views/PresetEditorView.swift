@@ -76,7 +76,7 @@ private struct DimensionRuleEditor: View {
     let defaultPoints: Double
 
     var body: some View {
-        LabeledContent(title) {
+        LabeledContent {
             HStack(spacing: 10) {
                 Picker("", selection: mode) {
                     Text("dimension.unchanged").tag(DimensionMode.unchanged)
@@ -98,6 +98,10 @@ private struct DimensionRuleEditor: View {
                         .accessibilityHidden(true)
                 }
             }
+        } label: {
+            Text(title)
+                .fontWeight(.semibold)
+                .foregroundStyle(.primary)
         }
         .foregroundStyle(.primary)
     }
