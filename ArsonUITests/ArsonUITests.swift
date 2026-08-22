@@ -35,6 +35,14 @@ final class ArsonUITests: XCTestCase {
                issue.element?.elementType == .popUpButton {
                 return true
             }
+            // AppKit's native full-screen title-bar button exposes a disabled internal
+            // group that macOS 26 reports as a parent/child mismatch.
+            if issue.auditType == .parentChild,
+               let element = issue.element,
+               element.elementType == .group,
+               !element.isEnabled {
+                return true
+            }
             // Selected SwiftUI List rows use a system material that the macOS 27 beta
             // contrast sampler misclassifies even with primary foreground content.
             if issue.auditType == .contrast,
