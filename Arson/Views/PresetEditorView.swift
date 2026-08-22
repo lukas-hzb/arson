@@ -89,9 +89,11 @@ private struct DimensionRuleEditor: View {
                         .multilineTextAlignment(.trailing)
                         .textFieldStyle(.roundedBorder)
                         .frame(width: 90)
+                        .accessibilityLabel(Text(title))
                     Text(rule.mode == .percent ? "%" : String(localized: "unit.points"))
                         .foregroundStyle(.primary)
                         .frame(width: 45, alignment: .leading)
+                        .accessibilityHidden(true)
                 }
             }
         }
@@ -127,8 +129,10 @@ private struct NumberField: View {
                 .multilineTextAlignment(.trailing)
                 .textFieldStyle(.roundedBorder)
                 .frame(width: 90)
+                .accessibilityLabel(label)
             Text("unit.points")
                 .foregroundStyle(.primary)
+                .accessibilityHidden(true)
         }
     }
 }
