@@ -40,6 +40,7 @@ struct PresetEditorView: View {
                         NumberField(label: "Y", value: $preset.offsetY)
                     }
                 }
+                .foregroundStyle(.primary)
                 Text("editor.offsetHint")
                     .font(.caption)
             }
@@ -49,6 +50,7 @@ struct PresetEditorView: View {
                     HotKeyRecorderView(shortcut: $preset.shortcut)
                         .frame(width: 150, height: 28)
                 }
+                .foregroundStyle(.primary)
                 Text("editor.shortcutHint")
                     .font(.caption)
             }
@@ -97,6 +99,7 @@ private struct DimensionRuleEditor: View {
                 }
             }
         }
+        .foregroundStyle(.primary)
     }
 
     private var mode: Binding<DimensionMode> {
