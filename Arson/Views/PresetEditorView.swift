@@ -24,7 +24,8 @@ struct PresetEditorView: View {
                     defaultPoints: 600
                 )
                 Text("editor.visibleAreaHint")
-                    .font(.caption)
+                    .font(.callout)
+                    .foregroundStyle(.primary)
             }
 
             Section("editor.position") {
@@ -42,7 +43,8 @@ struct PresetEditorView: View {
                 }
                 .foregroundStyle(.primary)
                 Text("editor.offsetHint")
-                    .font(.caption)
+                    .font(.callout)
+                    .foregroundStyle(.primary)
             }
 
             Section("editor.shortcut") {
@@ -52,7 +54,8 @@ struct PresetEditorView: View {
                 }
                 .foregroundStyle(.primary)
                 Text("editor.shortcutHint")
-                    .font(.caption)
+                    .font(.callout)
+                    .foregroundStyle(.primary)
             }
 
             if !validationMessages.isEmpty {
