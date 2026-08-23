@@ -12,7 +12,7 @@ Arson is a native macOS utility for resizing and positioning the focused window 
 
 ## Install and keep one local copy
 
-Use the local installer for normal testing instead of opening an app inside `DerivedData`. It builds the current checkout, quits every running Arson process, replaces the single canonical copy at `/Applications/Arson.app`, unregisters build copies and the UI test runner from Launch Services, refreshes Launchpad, and opens the installed app:
+Use the local installer for normal testing instead of opening an app inside `DerivedData`. It builds the current checkout, quits every running Arson process, replaces the single canonical copy at `/Applications/Arson.app`, unregisters and deletes generated app and UI-test-runner bundles, refreshes Launchpad, and opens the installed app:
 
 ```sh
 ./Scripts/install-local.sh

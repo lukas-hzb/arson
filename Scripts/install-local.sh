@@ -101,6 +101,27 @@ unregister_build_copies() {
     done < <(/usr/bin/mdfind "kMDItemCFBundleIdentifier == '${UI_TEST_RUNNER_BUNDLE_IDENTIFIER}'" 2>/dev/null || true)
 }
 
+remove_repository_build_copies() {
+    local candidate
+    local derived_data_root="${REPOSITORY_ROOT}/DerivedData"
+
+    if [[ ! -d "$derived_data_root" ]]; then
+        return
+    fi
+
+    while IFS= read -r candidate; do
+        case "$candidate" in
+            "${derived_data_root}"/*/Arson.app|"${derived_data_root}"/*/ArsonUITests-Runner.app)
+                /bin/rm -rf -- "$candidate"
+                ;;
+            *)
+                print -u2 -- "Refusing to remove unexpected build path: ${candidate}"
+                exit 1
+                ;;
+        esac
+    done < <(/usr/bin/find "$derived_data_root" -type d \( -name Arson.app -o -name ArsonUITests-Runner.app \) -prune -print)
+}
+
 run_for_applications_directory() {
     if [[ -w /Applications ]]; then
         "$@"
@@ -122,6 +143,9 @@ install_current_build() {
         print -u2 -- "Set ARSON_XCODE_APP to the correct Xcode.app path and try again."
         exit 1
     fi
+
+    /bin/mkdir -p "${REPOSITORY_ROOT}/DerivedData"
+    /usr/bin/touch "${REPOSITORY_ROOT}/DerivedData/.metadata_never_index"
 
     print -- "Building the current Arson checkout…"
     DEVELOPER_DIR="${ARSON_XCODE_APP}/Contents/Developer" \
@@ -179,6 +203,7 @@ if ! $show_onboarding_only; then
 fi
 
 unregister_build_copies
+remove_repository_build_copies
 "$LSREGISTER" -f "$INSTALL_APP" >/dev/null
 
 if $reset_onboarding; then
