@@ -24,7 +24,7 @@ private struct PresetDetailView: View {
                let index = store.bindingIndex(for: selectedID) {
                 PresetEditorView(
                     preset: $store.presets[index],
-                    validationMessages: model.validationMessages(for: store.presets[index])
+                    hotKeyError: model.hotKeyErrors[store.presets[index].id]?.errorDescription
                 )
                 .id(selectedID)
             } else {

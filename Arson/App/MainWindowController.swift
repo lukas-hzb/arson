@@ -14,6 +14,9 @@ final class MainWindowController: NSWindowController {
     nonisolated private static let deletePresetIdentifier = NSToolbarItem.Identifier(
         "ArsonDeletePreset"
     )
+    nonisolated private static let presetMenuIdentifier = NSUserInterfaceItemIdentifier(
+        "ArsonPresetMenu"
+    )
 
     private let model: AppModel
     private let selection: PresetSelection
@@ -105,6 +108,58 @@ final class MainWindowController: NSWindowController {
         toolbar.allowsUserCustomization = false
         toolbar.autosavesConfiguration = false
         window.toolbar = toolbar
+    }
+
+    func installPresetMenuIfNeeded() {
+        guard let mainMenu = NSApp.mainMenu,
+              !mainMenu.items.contains(where: { $0.identifier == Self.presetMenuIdentifier }) else {
+            return
+        }
+
+        let menuTitle = String(localized: "menu.preset")
+        let submenu = NSMenu(title: menuTitle)
+        submenu.addItem(
+            makeMenuItem(
+                title: String(localized: "action.addPreset"),
+                action: #selector(addPreset(_:)),
+                keyEquivalent: "n"
+            )
+        )
+        submenu.addItem(.separator())
+        submenu.addItem(
+            makeMenuItem(
+                title: String(localized: "action.duplicatePreset"),
+                action: #selector(duplicateSelectedPreset(_:)),
+                keyEquivalent: "d"
+            )
+        )
+        submenu.addItem(
+            makeMenuItem(
+                title: String(localized: "action.deletePreset"),
+                action: #selector(deleteSelectedPreset(_:)),
+                keyEquivalent: "\u{8}"
+            )
+        )
+
+        let menuItem = NSMenuItem(title: menuTitle, action: nil, keyEquivalent: "")
+        menuItem.identifier = Self.presetMenuIdentifier
+        menuItem.submenu = submenu
+
+        let insertionIndex = mainMenu.items.firstIndex {
+            $0.submenu === NSApp.windowsMenu
+        } ?? max(0, mainMenu.numberOfItems - 1)
+        mainMenu.insertItem(menuItem, at: insertionIndex)
+    }
+
+    private func makeMenuItem(
+        title: String,
+        action: Selector,
+        keyEquivalent: String
+    ) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: keyEquivalent)
+        item.target = self
+        item.keyEquivalentModifierMask = .command
+        return item
     }
 
     private func observeModel() {

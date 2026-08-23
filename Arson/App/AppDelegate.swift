@@ -36,6 +36,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
 
+    func applicationDidUpdate(_ notification: Notification) {
+        // SwiftUI owns the standard main menu and can finish or rebuild it after launch.
+        // Installing idempotently here keeps the native Preset menu attached reliably.
+        mainWindowController?.installPresetMenuIfNeeded()
+    }
+
     func applicationWillTerminate(_ notification: Notification) {
         model.shutdown()
     }
@@ -48,6 +54,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         mainWindowController?.showWindow(nil)
         mainWindowController?.window?.makeKeyAndOrderFront(nil)
+        Task { @MainActor [weak self] in
+            // SwiftUI finishes constructing the main menu after the app delegate's
+            // launch callback. Yield once so the native menu can be extended reliably.
+            await Task.yield()
+            self?.mainWindowController?.installPresetMenuIfNeeded()
+        }
     }
 
     func markWindowVisible() {
