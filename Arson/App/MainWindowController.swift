@@ -184,6 +184,12 @@ final class MainWindowController: NSWindowController {
 
     @objc private func addPreset(_ sender: Any?) {
         selection.selectedID = model.store.addPreset()
+        relinquishToolbarFocusIfNeeded(sender)
+    }
+
+    private func relinquishToolbarFocusIfNeeded(_ sender: Any?) {
+        guard sender is NSToolbarItem || sender is NSButton else { return }
+        window?.makeFirstResponder(nil)
     }
 
     @objc private func duplicateSelectedPreset(_ sender: Any?) {

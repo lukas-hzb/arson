@@ -5,6 +5,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     static private(set) var shared: AppDelegate!
     let model = AppModel()
     private var mainWindowController: MainWindowController?
+    private var menuBarController: MenuBarController?
 
     override init() {
         if ProcessInfo.processInfo.arguments.contains("-ui-testing-reset") {
@@ -18,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
+        menuBarController = MenuBarController(model: model)
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(windowWillClose(_:)),
@@ -43,6 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        menuBarController?.stop()
         model.shutdown()
     }
 
