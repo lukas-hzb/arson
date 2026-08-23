@@ -93,5 +93,36 @@ struct WindowGeometryEngineTests {
             try engine.targetSize(for: preset, originalSize: original.size, visibleFrame: visible)
         }
     }
-}
 
+    @Test func animationCurveStartsAndEndsExactly() {
+        #expect(WindowAnimationCurve.easeInOut(-1) == 0)
+        #expect(WindowAnimationCurve.easeInOut(0) == 0)
+        #expect(WindowAnimationCurve.easeInOut(1) == 1)
+        #expect(WindowAnimationCurve.easeInOut(2) == 1)
+    }
+
+    @Test func animationCurveEasesAtBothEnds() {
+        let firstQuarter = WindowAnimationCurve.easeInOut(0.25)
+        let lastQuarter = WindowAnimationCurve.easeInOut(0.75)
+
+        #expect(firstQuarter < 0.25)
+        #expect(lastQuarter > 0.75)
+        #expect(abs((firstQuarter + lastQuarter) - 1) < 0.000_001)
+    }
+
+    @Test func animationInterpolatesPositionAndSize() {
+        let position = WindowAnimationCurve.interpolate(
+            from: CGPoint(x: 100, y: 200),
+            to: CGPoint(x: 500, y: 600),
+            progress: 0.25
+        )
+        let size = WindowAnimationCurve.interpolate(
+            from: CGSize(width: 800, height: 500),
+            to: CGSize(width: 400, height: 300),
+            progress: 0.25
+        )
+
+        #expect(position == CGPoint(x: 200, y: 300))
+        #expect(size == CGSize(width: 700, height: 450))
+    }
+}

@@ -46,11 +46,14 @@ enum WindowActionError: LocalizedError, Equatable {
 
 @MainActor
 final class AccessibilityWindowController {
+    private static let animationStepCount = 14
+    private static let animationFrameDuration = Duration.milliseconds(16)
+
     private let geometry = WindowGeometryEngine()
     private let converter = ScreenCoordinateConverter()
     private let logger = Logger(subsystem: "de.lukasharzbecker.arson", category: "Accessibility")
 
-    func apply(_ preset: Preset) throws -> ScreenDescriptor {
+    func apply(_ preset: Preset, animated: Bool) async throws -> ScreenDescriptor {
         guard AXIsProcessTrusted() else { throw WindowActionError.permissionRequired }
         guard preset.isValid, preset.hasEffect else { throw WindowActionError.invalidPreset }
         guard let application = NSWorkspace.shared.frontmostApplication else {
@@ -97,28 +100,56 @@ final class AccessibilityWindowController {
             throw WindowActionError.invalidPreset
         }
 
-        var didChangeSize = false
+        var didChangeFrame = false
         do {
-            if changesSize {
-                try setSize(window, attribute: kAXSizeAttribute, value: requestedSize)
-                didChangeSize = true
-            }
+            let stepCount = animated ? Self.animationStepCount : 1
+            for step in 1...stepCount {
+                try Task.checkCancellation()
+                let linearProgress = CGFloat(step) / CGFloat(stepCount)
+                let progress = WindowAnimationCurve.easeInOut(linearProgress)
 
-            let actualSize: CGSize = changesSize
-                ? try copySize(window, attribute: kAXSizeAttribute)
-                : originalSize
+                if changesSize {
+                    let intermediateSize = WindowAnimationCurve.interpolate(
+                        from: originalSize,
+                        to: requestedSize,
+                        progress: progress
+                    )
+                    try setSize(window, attribute: kAXSizeAttribute, value: intermediateSize)
+                    didChangeFrame = true
+                }
 
-            if changesPosition {
-                let targetPosition = try geometry.targetOrigin(
-                    for: preset,
-                    originalOrigin: originalPosition,
-                    actualSize: actualSize,
-                    visibleFrame: screen.visibleFrame
-                )
-                try setPoint(window, attribute: kAXPositionAttribute, value: targetPosition)
+                let actualSize: CGSize = changesSize
+                    ? try copySize(window, attribute: kAXSizeAttribute)
+                    : originalSize
+
+                if changesPosition {
+                    let targetPosition = try geometry.targetOrigin(
+                        for: preset,
+                        originalOrigin: originalPosition,
+                        actualSize: actualSize,
+                        visibleFrame: screen.visibleFrame
+                    )
+                    let intermediatePosition = WindowAnimationCurve.interpolate(
+                        from: originalPosition,
+                        to: targetPosition,
+                        progress: progress
+                    )
+                    try setPoint(
+                        window,
+                        attribute: kAXPositionAttribute,
+                        value: intermediatePosition
+                    )
+                    didChangeFrame = true
+                }
+
+                if animated && step < stepCount {
+                    try await Task.sleep(for: Self.animationFrameDuration)
+                }
             }
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
-            if didChangeSize {
+            if didChangeFrame {
                 rollback(window, frame: originalFrame)
             }
             throw error

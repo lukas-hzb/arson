@@ -1,3 +1,4 @@
+import AppKit
 import Combine
 import Foundation
 
@@ -13,6 +14,7 @@ final class AppModel: ObservableObject {
     private let windowController: AccessibilityWindowController
     private let hud: HUDController
     private var observations: Set<AnyCancellable> = []
+    private var windowActionTask: Task<Void, Never>?
 
     init(
         store: PresetStore = PresetStore(),
@@ -53,10 +55,19 @@ final class AppModel: ObservableObject {
 
     func perform(_ preset: Preset) {
         permissions.refresh()
-        do {
-            _ = try windowController.apply(preset)
-        } catch {
-            hud.show(message: error.localizedDescription, on: nil)
+        windowActionTask?.cancel()
+        windowActionTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                _ = try await windowController.apply(
+                    preset,
+                    animated: !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+                )
+            } catch is CancellationError {
+                // A newer preset replaces an animation already in progress.
+            } catch {
+                hud.show(message: error.localizedDescription, on: nil)
+            }
         }
     }
 
@@ -65,6 +76,7 @@ final class AppModel: ObservableObject {
     }
 
     func shutdown() {
+        windowActionTask?.cancel()
         hotKeys.unregisterAll()
     }
 

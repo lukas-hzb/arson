@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     override init() {
         if ProcessInfo.processInfo.arguments.contains("-ui-testing-reset") {
             UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
+            UserDefaults.standard.removeObject(forKey: "completedOnboardingVersion")
             UserDefaults.standard.set(true, forKey: "showMenuBarItem")
         }
         super.init()

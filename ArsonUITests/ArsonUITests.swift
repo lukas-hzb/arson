@@ -13,6 +13,11 @@ final class ArsonUITests: XCTestCase {
         app.launch()
 
         XCTAssertTrue(app.staticTexts["Welcome to Arson"].waitForExistence(timeout: 5))
+        app.buttons["Continue"].click()
+
+        XCTAssertTrue(app.staticTexts["Allow Window Control"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["System Settings › Privacy & Security › Device Control & Data Access"].exists)
+        XCTAssertTrue(app.buttons["Request Access"].exists)
         app.buttons["Later"].click()
 
         let addButton = app.buttons["Add Preset"]

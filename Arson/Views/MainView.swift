@@ -10,12 +10,14 @@ struct MainView: View {
 }
 
 private struct PresetManagerView: View {
+    private static let currentOnboardingVersion = 1
+
     @ObservedObject var model: AppModel
     @ObservedObject var store: PresetStore
     @Environment(\.undoManager) private var undoManager
     @State private var selectedID: UUID?
     @State private var requiresUITestOnboarding = ProcessInfo.processInfo.arguments.contains("-ui-testing-reset")
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @AppStorage("completedOnboardingVersion") private var completedOnboardingVersion = 0
 
     var body: some View {
         NavigationSplitView {
@@ -72,7 +74,7 @@ private struct PresetManagerView: View {
         .sheet(isPresented: onboardingPresented) {
             OnboardingView {
                 requiresUITestOnboarding = false
-                hasCompletedOnboarding = true
+                completedOnboardingVersion = Self.currentOnboardingVersion
             }
             .environmentObject(model)
         }
@@ -80,11 +82,14 @@ private struct PresetManagerView: View {
 
     private var onboardingPresented: Binding<Bool> {
         Binding(
-            get: { requiresUITestOnboarding || !hasCompletedOnboarding },
+            get: {
+                requiresUITestOnboarding
+                    || completedOnboardingVersion < Self.currentOnboardingVersion
+            },
             set: {
                 if !$0 {
                     requiresUITestOnboarding = false
-                    hasCompletedOnboarding = true
+                    completedOnboardingVersion = Self.currentOnboardingVersion
                 }
             }
         )
