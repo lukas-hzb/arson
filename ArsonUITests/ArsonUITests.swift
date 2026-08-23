@@ -2,6 +2,36 @@ import XCTest
 
 final class ArsonUITests: XCTestCase {
     @MainActor
+    func testGeometryValuesUseEditableNativeSteppers() {
+        continueAfterFailure = false
+
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-completedOnboardingVersion", "1",
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US"
+        ]
+        app.launchEnvironment["ARSON_TEST_STORAGE_DIRECTORY"] = NSTemporaryDirectory()
+            + "ArsonUITests-\(UUID().uuidString)"
+        app.launch()
+
+        let widthStepper = app.steppers["Width"]
+        let widthField = app.textFields["Width"]
+        XCTAssertTrue(widthStepper.waitForExistence(timeout: 5))
+        XCTAssertTrue(widthField.exists)
+        XCTAssertEqual(widthField.value as? String, "400")
+
+        let incrementButton = widthStepper.buttons.firstMatch
+        XCTAssertTrue(incrementButton.isHittable)
+        incrementButton.click()
+        XCTAssertEqual(widthField.value as? String, "401")
+
+        XCTAssertTrue(app.steppers["Height"].exists)
+        XCTAssertTrue(app.steppers["X offset"].exists)
+        XCTAssertTrue(app.steppers["Y offset"].exists)
+    }
+
+    @MainActor
     func testSidebarAccessoryCanCollapseAndReopen() {
         continueAfterFailure = false
 

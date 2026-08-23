@@ -12,13 +12,13 @@ struct PresetEditorView: View {
                         TextField("", text: $preset.name)
                             .labelsHidden()
                             .textFieldStyle(.roundedBorder)
-                            .frame(minWidth: 220, idealWidth: 280, maxWidth: 340)
+                            .frame(width: 280)
                             .accessibilityLabel(Text("editor.name"))
                             .accessibilityIdentifier("presetNameField")
 
                         if preset.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                             ValidationMessage(String(localized: "validation.name"))
-                                .frame(maxWidth: 340, alignment: .leading)
+                                .frame(maxWidth: 280, alignment: .leading)
                         }
                     }
                 } label: {
@@ -128,7 +128,7 @@ private struct DimensionRuleEditor: View {
     var body: some View {
         LabeledContent {
             VStack(alignment: .trailing, spacing: 5) {
-                HStack(spacing: 10) {
+                HStack(spacing: 8) {
                     Picker("", selection: mode) {
                         Text("dimension.unchanged").tag(DimensionMode.unchanged)
                         Text("dimension.points").tag(DimensionMode.points)
@@ -138,19 +138,14 @@ private struct DimensionRuleEditor: View {
                     .frame(width: 135)
 
                     if rule.mode != .unchanged {
-                        TextField(
-                            "",
+                        NumericStepper(
+                            label: title,
                             value: $rule.value,
-                            format: .number.precision(.fractionLength(0...1))
+                            range: rule.mode == .percent
+                                ? 0.1...100
+                                : 0.1...Double.greatestFiniteMagnitude,
+                            unit: rule.mode == .percent ? "%" : "unit.points"
                         )
-                        .multilineTextAlignment(.trailing)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 90)
-                        .accessibilityLabel(Text(title))
-                        Text(rule.mode == .percent ? "%" : String(localized: "unit.points"))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 45, alignment: .leading)
-                            .accessibilityHidden(true)
                     }
                 }
 
@@ -210,20 +205,12 @@ private struct NumberField: View {
     var body: some View {
         LabeledContent {
             VStack(alignment: .trailing, spacing: 5) {
-                HStack(spacing: 6) {
-                    TextField(
-                        "",
-                        value: $value,
-                        format: .number.precision(.fractionLength(0...1))
-                    )
-                    .multilineTextAlignment(.trailing)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 90)
-                    .accessibilityLabel(Text(label))
-                    Text("unit.points")
-                        .foregroundStyle(.secondary)
-                        .accessibilityHidden(true)
-                }
+                NumericStepper(
+                    label: label,
+                    value: $value,
+                    range: nil,
+                    unit: "unit.points"
+                )
 
                 if let validationMessage {
                     ValidationMessage(validationMessage)
@@ -234,6 +221,48 @@ private struct NumberField: View {
             Text(label)
                 .foregroundStyle(.primary)
                 .accessibilityIdentifier("configurationFieldLabel")
+        }
+    }
+}
+
+private struct NumericStepper: View {
+    let label: LocalizedStringKey
+    @Binding var value: Double
+    let range: ClosedRange<Double>?
+    let unit: LocalizedStringKey
+
+    var body: some View {
+        HStack(spacing: 6) {
+            stepper
+                .labelsHidden()
+                .frame(width: 112)
+
+            Text(unit)
+                .foregroundStyle(.secondary)
+                .frame(width: 32, alignment: .leading)
+                .accessibilityHidden(true)
+        }
+    }
+
+    @ViewBuilder
+    private var stepper: some View {
+        if let range {
+            Stepper(
+                value: $value,
+                in: range,
+                step: 1,
+                format: .number.precision(.fractionLength(0...1))
+            ) {
+                Text(label)
+            }
+        } else {
+            Stepper(
+                value: $value,
+                step: 1,
+                format: .number.precision(.fractionLength(0...1))
+            ) {
+                Text(label)
+            }
         }
     }
 }
