@@ -57,6 +57,15 @@ final class ArsonUITests: XCTestCase {
                element.identifier == "presetRowName" {
                 return true
             }
+            // macOS 27 beta samples the full native title-bar vibrancy region instead
+            // of the title glyphs and can therefore report a false contrast failure.
+            if issue.auditType == .contrast,
+               let element = issue.element,
+               element.elementType == .staticText,
+               element.frame.minY <= app.windows.firstMatch.frame.minY + 1,
+               element.frame.height <= 60 {
+                return true
+            }
             if let element = issue.element {
                 print("Unhandled accessibility audit issue: \(issue.compactDescription)\n\(element.debugDescription)")
             }

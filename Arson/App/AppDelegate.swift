@@ -1,11 +1,10 @@
 import AppKit
-import SwiftUI
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     static private(set) var shared: AppDelegate!
     let model = AppModel()
-    private var mainWindow: NSWindow?
+    private var mainWindowController: MainWindowController?
 
     override init() {
         if ProcessInfo.processInfo.arguments.contains("-ui-testing-reset") {
@@ -44,27 +43,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func showMainWindow() {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
-        if mainWindow == nil {
-            let rootView = MainView().environmentObject(model)
-            let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 920, height: 620),
-                styleMask: [.titled, .closable, .miniaturizable, .resizable, .unifiedTitleAndToolbar],
-                backing: .buffered,
-                defer: false
-            )
-            window.title = "Arson"
-            window.titleVisibility = .hidden
-            window.contentMinSize = NSSize(width: 720, height: 480)
-            window.isReleasedWhenClosed = false
-            window.identifier = NSUserInterfaceItemIdentifier("ArsonMainWindow")
-            window.setAccessibilityLabel("Arson")
-            let hostingController = NSHostingController(rootView: rootView)
-            hostingController.view.setAccessibilityLabel(String(localized: "sidebar.presets"))
-            window.contentViewController = hostingController
-            window.center()
-            mainWindow = window
+        if mainWindowController == nil {
+            mainWindowController = MainWindowController(model: model)
         }
-        mainWindow?.makeKeyAndOrderFront(nil)
+        mainWindowController?.showWindow(nil)
+        mainWindowController?.window?.makeKeyAndOrderFront(nil)
     }
 
     func markWindowVisible() {

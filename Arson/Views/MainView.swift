@@ -1,59 +1,27 @@
-import AppKit
 import SwiftUI
 
 struct MainView: View {
     @EnvironmentObject private var model: AppModel
+    @ObservedObject var selection: PresetSelection
 
     var body: some View {
-        PresetManagerView(model: model, store: model.store)
+        PresetDetailView(model: model, store: model.store, selection: selection)
     }
 }
 
-private struct PresetManagerView: View {
+private struct PresetDetailView: View {
     private static let currentOnboardingVersion = 1
 
     @ObservedObject var model: AppModel
     @ObservedObject var store: PresetStore
-    @Environment(\.undoManager) private var undoManager
-    @State private var selectedID: UUID?
+    @ObservedObject var selection: PresetSelection
     @State private var requiresUITestOnboarding = ProcessInfo.processInfo.arguments.contains("-ui-testing-reset")
     @AppStorage("completedOnboardingVersion") private var completedOnboardingVersion = 0
 
     var body: some View {
-        NavigationSplitView {
-            List(selection: $selectedID) {
-                ForEach(store.presets) { preset in
-                    PresetRow(preset: preset, hasError: !model.validationMessages(for: preset).isEmpty)
-                        .tag(preset.id)
-                        .contextMenu {
-                            Button("action.duplicate") { duplicate(preset.id) }
-                            Divider()
-                            Button("action.delete", role: .destructive) { delete(preset.id) }
-                        }
-                }
-                .onMove(perform: store.move)
-            }
-            .navigationTitle("sidebar.presets")
-            .frame(minWidth: 250)
-            .toolbar {
-                ToolbarItemGroup {
-                    Button(action: add) {
-                        Label("action.addPreset", systemImage: "plus")
-                    }
-                    Button(action: duplicateSelected) {
-                        Label("action.duplicate", systemImage: "plus.square.on.square")
-                    }
-                    .disabled(selectedID == nil)
-                    Button(action: deleteSelected) {
-                        Label("action.delete", systemImage: "trash")
-                    }
-                    .disabled(selectedID == nil)
-                }
-            }
-            .accessibilityElement(children: .contain)
-            .accessibilityLabel(Text("sidebar.presets"))
-        } detail: {
-            if let selectedID, let index = store.bindingIndex(for: selectedID) {
+        Group {
+            if let selectedID = selection.selectedID,
+               let index = store.bindingIndex(for: selectedID) {
                 PresetEditorView(
                     preset: $store.presets[index],
                     validationMessages: model.validationMessages(for: store.presets[index])
@@ -67,9 +35,10 @@ private struct PresetManagerView: View {
                 )
             }
         }
-        .accessibilityLabel(Text("sidebar.presets"))
         .onAppear {
-            if selectedID == nil { selectedID = store.presets.first?.id }
+            if selection.selectedID == nil {
+                selection.selectedID = store.presets.first?.id
+            }
         }
         .sheet(isPresented: onboardingPresented) {
             OnboardingView {
@@ -93,53 +62,5 @@ private struct PresetManagerView: View {
                 }
             }
         )
-    }
-
-    private func add() {
-        selectedID = store.addPreset()
-    }
-
-    private func duplicate(_ id: UUID) {
-        selectedID = store.duplicate(id)
-    }
-
-    private func duplicateSelected() {
-        guard let selectedID else { return }
-        duplicate(selectedID)
-    }
-
-    private func delete(_ id: UUID) {
-        let nextSelection = store.presets.first(where: { $0.id != id })?.id
-        store.delete(id, undoManager: undoManager)
-        selectedID = nextSelection
-    }
-
-    private func deleteSelected() {
-        guard let selectedID else { return }
-        delete(selectedID)
-    }
-}
-
-private struct PresetRow: View {
-    let preset: Preset
-    let hasError: Bool
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: hasError ? "exclamationmark.circle.fill" : "rectangle.on.rectangle")
-                .foregroundStyle(.primary)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(preset.name.isEmpty ? String(localized: "preset.untitled") : preset.name)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(Color(nsColor: .labelColor))
-                    .lineLimit(1)
-                    .accessibilityIdentifier("presetRowName")
-                if let shortcut = preset.shortcut {
-                    Text(shortcut.displayValue)
-                        .font(.caption.monospaced())
-                }
-            }
-        }
     }
 }

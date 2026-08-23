@@ -68,7 +68,6 @@ struct PresetEditorView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(preset.name.isEmpty ? String(localized: "preset.untitled") : preset.name)
         .padding(.horizontal, 8)
     }
 }
