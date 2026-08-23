@@ -1,9 +1,9 @@
 import CoreGraphics
 
 struct WindowAnimationCurve: Sendable {
-    static func easeInOut(_ progress: CGFloat) -> CGFloat {
+    static func snap(_ progress: CGFloat) -> CGFloat {
         let clamped = min(max(progress, 0), 1)
-        return clamped * clamped * (3 - 2 * clamped)
+        return 1 - pow(1 - clamped, 3)
     }
 
     static func interpolate(from start: CGPoint, to end: CGPoint, progress: CGFloat) -> CGPoint {

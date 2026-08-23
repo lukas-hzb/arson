@@ -95,19 +95,21 @@ struct WindowGeometryEngineTests {
     }
 
     @Test func animationCurveStartsAndEndsExactly() {
-        #expect(WindowAnimationCurve.easeInOut(-1) == 0)
-        #expect(WindowAnimationCurve.easeInOut(0) == 0)
-        #expect(WindowAnimationCurve.easeInOut(1) == 1)
-        #expect(WindowAnimationCurve.easeInOut(2) == 1)
+        #expect(WindowAnimationCurve.snap(-1) == 0)
+        #expect(WindowAnimationCurve.snap(0) == 0)
+        #expect(WindowAnimationCurve.snap(1) == 1)
+        #expect(WindowAnimationCurve.snap(2) == 1)
     }
 
-    @Test func animationCurveEasesAtBothEnds() {
-        let firstQuarter = WindowAnimationCurve.easeInOut(0.25)
-        let lastQuarter = WindowAnimationCurve.easeInOut(0.75)
+    @Test func animationCurveMovesQuicklyAndSettlesWithoutOvershoot() {
+        let firstQuarter = WindowAnimationCurve.snap(0.25)
+        let halfway = WindowAnimationCurve.snap(0.5)
+        let lastQuarter = WindowAnimationCurve.snap(0.75)
 
-        #expect(firstQuarter < 0.25)
+        #expect(firstQuarter > 0.5)
+        #expect(halfway > firstQuarter)
         #expect(lastQuarter > 0.75)
-        #expect(abs((firstQuarter + lastQuarter) - 1) < 0.000_001)
+        #expect(lastQuarter < 1)
     }
 
     @Test func animationInterpolatesPositionAndSize() {
