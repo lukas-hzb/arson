@@ -2,6 +2,36 @@ import XCTest
 
 final class ArsonUITests: XCTestCase {
     @MainActor
+    func testSidebarAccessoryCanCollapseAndReopen() {
+        continueAfterFailure = false
+
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-completedOnboardingVersion", "1",
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US"
+        ]
+        app.launchEnvironment["ARSON_TEST_STORAGE_DIRECTORY"] = NSTemporaryDirectory()
+            + "ArsonUITests-\(UUID().uuidString)"
+        app.launch()
+
+        let addButton = app.buttons["Add Preset"]
+        let accessoryToggle = app.buttons["Show or Hide Sidebar"]
+        XCTAssertTrue(addButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(accessoryToggle.isHittable)
+
+        accessoryToggle.click()
+
+        let toolbarToggle = app.buttons["Sidebar"]
+        XCTAssertTrue(toolbarToggle.waitForExistence(timeout: 3))
+        XCTAssertTrue(toolbarToggle.isHittable)
+        toolbarToggle.click()
+
+        XCTAssertTrue(addButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(addButton.isHittable)
+    }
+
+    @MainActor
     func testOnboardingAndPresetCreation() throws {
         continueAfterFailure = false
 
@@ -22,6 +52,8 @@ final class ArsonUITests: XCTestCase {
 
         let addButton = app.buttons["Add Preset"]
         XCTAssertTrue(addButton.waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["Duplicate"].exists)
+        XCTAssertTrue(app.buttons["Delete"].exists)
         addButton.click()
 
         XCTAssertTrue(app.textFields["presetNameField"].waitForExistence(timeout: 5))

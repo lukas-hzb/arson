@@ -6,6 +6,7 @@
     "action.deletePreset" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Preset löschen" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete Preset" } } } },
     "action.duplicate" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Duplizieren" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Duplicate" } } } },
     "action.more" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Weitere Aktionen" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "More Actions" } } } },
+    "action.toggleSidebar" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Seitenleiste ein- oder ausblenden" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Show or Hide Sidebar" } } } },
     "dimension.percent" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Prozent" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Percent" } } } },
     "dimension.points" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Punkte" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Points" } } } },
     "dimension.unchanged" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Unverändert" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Unchanged" } } } },
