@@ -10,12 +10,37 @@ Arson is a native macOS utility for resizing and positioning the focused window 
 - Xcode 26.5 or later
 - Accessibility permission for controlling windows of other apps
 
+## Install and keep one local copy
+
+Use the local installer for normal testing instead of opening an app inside `DerivedData`. It builds the current checkout, quits every running Arson process, replaces the single canonical copy at `/Applications/Arson.app`, unregisters build copies from Launch Services, refreshes Launchpad, and opens the installed app:
+
+```sh
+./Scripts/install-local.sh
+```
+
+Run the same command after every code change to update the installed copy. macOS may ask for an administrator password when replacing the app in `/Applications`.
+
+To test onboarding again without rebuilding or changing the current app signature and permission, use:
+
+```sh
+./Scripts/install-local.sh --show-onboarding
+```
+
+To install a fresh build and show onboarding immediately, use:
+
+```sh
+./Scripts/install-local.sh --reset-onboarding
+```
+
+To update the installed app without launching it, use `./Scripts/install-local.sh --no-open`. Always launch `/Applications/Arson.app`; do not launch copies from `DerivedData`. Because local builds are ad-hoc signed, macOS can require the newly built version to be removed and added again under **System Settings → Privacy & Security → Device Control & Data Access**. The onboarding explains this recovery path. On older macOS versions, that setting is named **Accessibility**.
+
 ## Run from Xcode
 
 1. Open `Arson.xcodeproj`.
 2. Select the shared `Arson` scheme and the local Mac destination.
 3. Build and run with `⌘R`.
-4. In the onboarding or Settings window, choose **Request Access** and approve Arson under **System Settings → Privacy & Security → Accessibility**.
+4. After Xcode development, run `./Scripts/install-local.sh` before normal testing so only `/Applications/Arson.app` remains registered.
+5. In the onboarding or Settings window, choose **Request Access** and approve Arson under **System Settings → Privacy & Security → Device Control & Data Access**. On older macOS versions, the setting is named **Accessibility**.
 
 The project uses automatic signing for local development. App Sandbox is deliberately disabled because Arson must control windows belonging to other processes. Hardened Runtime remains enabled.
 
@@ -46,7 +71,7 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
   -derivedDataPath /tmp/ArsonDerivedData
 ```
 
-Unit tests cover geometry, display coordinate conversion, persistence, validation, seed data, and shortcut conflicts. UI tests cover onboarding, preset creation, and Apple's accessibility audit. Accessibility control of third-party windows still requires manual testing because it depends on system permission and target-app behavior.
+Unit tests cover geometry, window animation, display coordinate conversion, persistence, validation, seed data, and shortcut conflicts. UI tests cover onboarding, preset creation, and Apple's accessibility audit. Accessibility control of third-party windows still requires manual testing because it depends on system permission and target-app behavior.
 
 ## Known limits
 
