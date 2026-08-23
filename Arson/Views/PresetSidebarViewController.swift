@@ -44,7 +44,8 @@ final class PresetSidebarViewController: NSViewController {
         column.resizingMask = .autoresizingMask
         tableView.addTableColumn(column)
         tableView.headerView = nil
-        tableView.style = .automatic
+        tableView.style = .sourceList
+        tableView.rowSizeStyle = .default
         tableView.allowsMultipleSelection = false
         tableView.allowsEmptySelection = true
         tableView.backgroundColor = .clear
@@ -251,7 +252,6 @@ private final class PresetSidebarCellView: NSTableCellView {
         self.identifier = identifier
 
         presetImageView.translatesAutoresizingMaskIntoConstraints = false
-        presetImageView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
         presetImageView.setContentHuggingPriority(.required, for: .horizontal)
         presetImageView.setAccessibilityHidden(true)
 
@@ -262,10 +262,6 @@ private final class PresetSidebarCellView: NSTableCellView {
         nameField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         shortcutField.translatesAutoresizingMaskIntoConstraints = false
-        shortcutField.font = .monospacedSystemFont(
-            ofSize: NSFont.smallSystemFontSize,
-            weight: .regular
-        )
         shortcutField.textColor = .secondaryLabelColor
         shortcutField.alignment = .right
         shortcutField.setContentHuggingPriority(.required, for: .horizontal)
@@ -277,12 +273,12 @@ private final class PresetSidebarCellView: NSTableCellView {
         textField = nameField
 
         NSLayoutConstraint.activate([
-            presetImageView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4),
+            presetImageView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 6),
             presetImageView.centerYAnchor.constraint(equalTo: centerYAnchor),
             presetImageView.widthAnchor.constraint(equalToConstant: 16),
             presetImageView.heightAnchor.constraint(equalToConstant: 16),
 
-            nameField.leadingAnchor.constraint(equalTo: presetImageView.trailingAnchor, constant: 6),
+            nameField.leadingAnchor.constraint(equalTo: presetImageView.trailingAnchor, constant: 8),
             nameField.centerYAnchor.constraint(equalTo: centerYAnchor),
 
             shortcutField.leadingAnchor.constraint(greaterThanOrEqualTo: nameField.trailingAnchor, constant: 8),
@@ -294,6 +290,14 @@ private final class PresetSidebarCellView: NSTableCellView {
     @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    override func layout() {
+        super.layout()
+        shortcutField.font = nameField.font
+        presetImageView.symbolConfiguration = nameField.font.map {
+            NSImage.SymbolConfiguration(pointSize: $0.pointSize, weight: .regular)
+        }
     }
 
     func configure(preset: Preset, hasError: Bool) {

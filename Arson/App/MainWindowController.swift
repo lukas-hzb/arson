@@ -5,6 +5,9 @@ import SwiftUI
 @MainActor
 final class MainWindowController: NSWindowController {
     nonisolated private static let toolbarIdentifier = NSToolbar.Identifier("ArsonMainToolbar")
+    nonisolated private static let addPresetIdentifier = NSToolbarItem.Identifier(
+        "ArsonAddPreset"
+    )
     nonisolated private static let duplicatePresetIdentifier = NSToolbarItem.Identifier(
         "ArsonDuplicatePreset"
     )
@@ -80,16 +83,7 @@ final class MainWindowController: NSWindowController {
         super.init(window: window)
 
         sidebarViewController.actionDelegate = self
-        sidebarItem.addTopAlignedAccessoryViewController(
-            SidebarControlsAccessoryViewController(
-                onAdd: { [weak self] in self?.addPreset(nil) },
-                onToggleSidebar: { [weak splitViewController] in
-                    splitViewController?.toggleSidebar(nil)
-                }
-            )
-        )
         configureToolbar(for: window)
-        observeSidebarVisibility(sidebarItem)
         observeModel()
         updateWindowState()
         window.center()
@@ -117,16 +111,6 @@ final class MainWindowController: NSWindowController {
         Publishers.CombineLatest(model.store.$presets, selection.$selectedID)
             .sink { [weak self] _, _ in
                 self?.updateWindowState()
-            }
-            .store(in: &observations)
-    }
-
-    private func observeSidebarVisibility(_ sidebarItem: NSSplitViewItem) {
-        sidebarItem.publisher(for: \.isCollapsed)
-            .sink { [weak self] isCollapsed in
-                self?.window?.toolbar?.items
-                    .first(where: { $0.itemIdentifier == .toggleSidebar })?
-                    .isHidden = !isCollapsed
             }
             .store(in: &observations)
     }
@@ -193,6 +177,8 @@ extension MainWindowController: PresetSidebarActionDelegate {
 extension MainWindowController: NSToolbarDelegate {
     nonisolated func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
         [
+            .flexibleSpace,
+            Self.addPresetIdentifier,
             .toggleSidebar,
             .sidebarTrackingSeparator,
             .flexibleSpace,
@@ -203,6 +189,8 @@ extension MainWindowController: NSToolbarDelegate {
 
     nonisolated func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
         [
+            .flexibleSpace,
+            Self.addPresetIdentifier,
             .toggleSidebar,
             .sidebarTrackingSeparator,
             .flexibleSpace,
@@ -218,6 +206,14 @@ extension MainWindowController: NSToolbarDelegate {
     ) -> NSToolbarItem? {
         MainActor.assumeIsolated {
             switch itemIdentifier {
+            case Self.addPresetIdentifier:
+                return makeToolbarItem(
+                    identifier: itemIdentifier,
+                    label: String(localized: "action.addPreset"),
+                    symbolName: "plus",
+                    action: #selector(addPreset(_:))
+                )
+
             case Self.duplicatePresetIdentifier:
                 return makeToolbarItem(
                     identifier: itemIdentifier,
@@ -281,54 +277,5 @@ extension MainWindowController: NSToolbarItemValidation, NSMenuItemValidation {
         default:
             return true
         }
-    }
-}
-
-@MainActor
-private final class SidebarControlsAccessoryViewController:
-    NSSplitViewItemAccessoryViewController {
-    init(onAdd: @escaping () -> Void, onToggleSidebar: @escaping () -> Void) {
-        super.init(nibName: nil, bundle: nil)
-
-        let hostingController = NSHostingController(
-            rootView: SidebarControlsAccessoryView(
-                onAdd: onAdd,
-                onToggleSidebar: onToggleSidebar
-            )
-        )
-        addChild(hostingController)
-        view = hostingController.view
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-}
-
-private struct SidebarControlsAccessoryView: View {
-    let onAdd: () -> Void
-    let onToggleSidebar: () -> Void
-
-    var body: some View {
-        HStack {
-            Button(action: onAdd) {
-                Image(systemName: "plus")
-            }
-            .buttonStyle(.glass)
-            .buttonBorderShape(.circle)
-            .help("action.addPreset")
-            .accessibilityLabel(Text("action.addPreset"))
-
-            Button(action: onToggleSidebar) {
-                Image(systemName: "sidebar.left")
-            }
-            .buttonStyle(.glass)
-            .buttonBorderShape(.circle)
-            .help("action.toggleSidebar")
-            .accessibilityLabel(Text("action.toggleSidebar"))
-        }
-        .controlSize(.large)
-        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 }
