@@ -306,7 +306,9 @@ private final class PresetSidebarCellView: NSTableCellView {
         shortcutField.stringValue = preset.shortcut?.displayValue ?? ""
         shortcutField.isHidden = preset.shortcut == nil
 
-        let symbolName = hasError ? "exclamationmark.circle.fill" : "rectangle.on.rectangle"
+        let symbolName = hasError
+            ? "exclamationmark.circle.fill"
+            : PresetSidebarSymbol.name(for: preset)
         presetImageView.image = NSImage(
             systemSymbolName: symbolName,
             accessibilityDescription: nil
