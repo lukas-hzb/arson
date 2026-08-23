@@ -116,6 +116,21 @@ struct PresetEditorView: View {
             }
         }
         .formStyle(.grouped)
+        .labeledContentStyle(CenteredFormLabeledContentStyle())
+    }
+}
+
+private struct CenteredFormLabeledContentStyle: LabeledContentStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(alignment: .center, spacing: 16) {
+            configuration.label
+            Spacer(minLength: 16)
+            configuration.content
+        }
+        .frame(minHeight: 28, alignment: .center)
+        // Keep the centered regular controls at the compact height of a native
+        // grouped form row instead of inheriting the larger generic-content inset.
+        .padding(.vertical, -4)
     }
 }
 
