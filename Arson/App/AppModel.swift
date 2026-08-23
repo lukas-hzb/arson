@@ -54,8 +54,11 @@ final class AppModel: ObservableObject {
 
     func perform(_ preset: Preset) {
         permissions.refresh()
-        windowActionTask?.cancel()
+        let previousTask = windowActionTask
+        previousTask?.cancel()
         windowActionTask = Task { @MainActor [weak self] in
+            await previousTask?.value
+            guard !Task.isCancelled else { return }
             guard let self else { return }
             do {
                 _ = try await windowController.apply(preset)

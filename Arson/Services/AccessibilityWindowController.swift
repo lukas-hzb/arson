@@ -52,8 +52,11 @@ actor AccessibilityWindowController {
 
     private let geometry = WindowGeometryEngine()
     private let logger = Logger(subsystem: "de.lukasharzbecker.arson", category: "Accessibility")
+    private var operationGeneration: UInt64 = 0
 
     func apply(_ preset: Preset) async throws -> ScreenDescriptor {
+        operationGeneration &+= 1
+        let generation = operationGeneration
         let context = try await MainActor.run {
             guard AXIsProcessTrusted() else { throw WindowActionError.permissionRequired }
             guard preset.isValid, preset.hasEffect else { throw WindowActionError.invalidPreset }
@@ -65,10 +68,11 @@ actor AccessibilityWindowController {
             }
             return WindowActionContext(
                 processIdentifier: application.processIdentifier,
-                screens: ScreenCoordinateConverter().screens()
+                screens: ScreenCoordinateConverter().screens(),
+                shouldAnimate: !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
             )
         }
-        try Task.checkCancellation()
+        try checkCancellation(for: generation)
 
         let appElement = AXUIElementCreateApplication(context.processIdentifier)
         AXUIElementSetMessagingTimeout(appElement, Self.messagingTimeout)
@@ -101,11 +105,11 @@ actor AccessibilityWindowController {
             throw WindowActionError.windowCannotMove
         }
 
-        let requestedSize: CGSize
+        let requestedFrame: CGRect
         do {
-            requestedSize = try geometry.targetSize(
+            requestedFrame = try geometry.targetFrame(
                 for: preset,
-                originalSize: originalSize,
+                originalFrame: originalFrame,
                 visibleFrame: screen.visibleFrame
             )
         } catch {
@@ -124,33 +128,51 @@ actor AccessibilityWindowController {
             var acceptedSize = originalSize
             var positionedForSize: CGSize?
 
-            for step in WindowMutationStrategy.steps(
-                changesSize: changesSize,
-                changesPosition: changesPosition
-            ) {
-                try Task.checkCancellation()
-                switch step {
-                case .size:
-                    try setSize(window, attribute: kAXSizeAttribute, value: requestedSize)
-                    acceptedSize = try copySize(window, attribute: kAXSizeAttribute)
-                    didChangeFrame = true
-                case .position:
-                    let position = try geometry.targetOrigin(
-                        for: preset,
-                        originalOrigin: originalPosition,
-                        actualSize: acceptedSize,
-                        visibleFrame: screen.visibleFrame
-                    )
-                    try setPoint(window, attribute: kAXPositionAttribute, value: position)
-                    positionedForSize = acceptedSize
-                    didChangeFrame = true
+            if context.shouldAnimate {
+                didChangeFrame = true
+                let finalFrame = try await animate(
+                    window,
+                    from: originalFrame,
+                    to: requestedFrame,
+                    positionMode: preset.position,
+                    changesSize: changesSize,
+                    changesPosition: changesPosition,
+                    displayID: screen.displayID,
+                    generation: generation
+                )
+                acceptedSize = finalFrame.size
+                if changesPosition {
+                    positionedForSize = finalFrame.size
+                }
+            } else {
+                for step in WindowMutationStrategy.steps(
+                    changesSize: changesSize,
+                    changesPosition: changesPosition
+                ) {
+                    try checkCancellation(for: generation)
+                    switch step {
+                    case .size:
+                        try setSize(window, attribute: kAXSizeAttribute, value: requestedFrame.size)
+                        acceptedSize = try copySize(window, attribute: kAXSizeAttribute)
+                        didChangeFrame = true
+                    case .position:
+                        let position = try geometry.targetOrigin(
+                            for: preset,
+                            originalOrigin: originalPosition,
+                            actualSize: acceptedSize,
+                            visibleFrame: screen.visibleFrame
+                        )
+                        try setPoint(window, attribute: kAXPositionAttribute, value: position)
+                        positionedForSize = acceptedSize
+                        didChangeFrame = true
+                    }
                 }
             }
 
             if changesPosition,
                let positionedForSize,
                !WindowMutationStrategy.sizesAreEquivalent(positionedForSize, acceptedSize) {
-                try Task.checkCancellation()
+                try checkCancellation(for: generation)
                 let correctedPosition = try geometry.targetOrigin(
                     for: preset,
                     originalOrigin: originalPosition,
@@ -168,17 +190,11 @@ actor AccessibilityWindowController {
                 _ = try copySize(window, attribute: kAXSizeAttribute)
             }
         } catch is CancellationError {
-            if didChangeFrame {
-                rollback(
-                    window,
-                    frame: originalFrame,
-                    restoreSize: changesSize,
-                    restorePosition: changesPosition
-                )
-            }
+            // Leave the current interpolated frame in place. A replacement action starts
+            // from exactly this visible state instead of jumping back to the old frame.
             throw CancellationError()
         } catch {
-            if didChangeFrame {
+            if didChangeFrame, generation == operationGeneration {
                 rollback(
                     window,
                     frame: originalFrame,
@@ -190,6 +206,130 @@ actor AccessibilityWindowController {
         }
 
         return screen
+    }
+
+    private func animate(
+        _ window: AXUIElement,
+        from originalFrame: CGRect,
+        to targetFrame: CGRect,
+        positionMode: PositionMode,
+        changesSize: Bool,
+        changesPosition: Bool,
+        displayID: CGDirectDisplayID,
+        generation: UInt64
+    ) async throws -> CGRect {
+        let (ticker, ticks) = try await MainActor.run {
+            guard let ticker = DisplayRefreshTicker(displayID: displayID) else {
+                throw WindowActionError.screenNotFound
+            }
+            ticker.start()
+            return (ticker, ticker.ticks)
+        }
+
+        var startTime: TimeInterval?
+        var lastAppliedFrame = originalFrame
+
+        do {
+            for await tickTime in ticks {
+                try checkCancellation(for: generation)
+                let animationStart = startTime ?? tickTime
+                startTime = animationStart
+                let linearProgress = min(
+                    max((tickTime - animationStart) / WindowFrameAnimation.duration, 0),
+                    1
+                )
+                let progress = WindowFrameAnimation.easeOut(CGFloat(linearProgress))
+                let requestedFrame = WindowFrameAnimation.interpolate(
+                    from: originalFrame,
+                    to: targetFrame,
+                    progress: progress
+                )
+
+                var currentOrigin = lastAppliedFrame.origin
+                var acceptedSize = lastAppliedFrame.size
+                let isFinalFrame = linearProgress >= 1
+
+                if changesSize {
+                    let positionBeforeResize = changesPosition
+                        && WindowFrameAnimation.shouldPositionBeforeResizing(
+                            from: lastAppliedFrame.size,
+                            to: requestedFrame.size
+                        )
+                    if positionBeforeResize,
+                       !pointsAreEquivalent(currentOrigin, requestedFrame.origin) {
+                        try setPoint(
+                            window,
+                            attribute: kAXPositionAttribute,
+                            value: requestedFrame.origin
+                        )
+                        currentOrigin = requestedFrame.origin
+                    }
+
+                    if isFinalFrame
+                        || !WindowMutationStrategy.sizesAreEquivalent(
+                            lastAppliedFrame.size,
+                            requestedFrame.size
+                        ) {
+                        try setSize(
+                            window,
+                            attribute: kAXSizeAttribute,
+                            value: requestedFrame.size
+                        )
+                        // Intermediate reads are synchronous cross-process calls. The
+                        // requested value is sufficient while animating; only the last
+                        // frame needs the size actually accepted by the target app.
+                        acceptedSize = isFinalFrame
+                            ? try copySize(window, attribute: kAXSizeAttribute)
+                            : requestedFrame.size
+                    }
+                }
+
+                let acceptedFrame = WindowFrameAnimation.frame(
+                    accepting: acceptedSize,
+                    for: requestedFrame,
+                    positionMode: positionMode
+                )
+                if changesPosition,
+                   (isFinalFrame || !pointsAreEquivalent(currentOrigin, acceptedFrame.origin)) {
+                    try setPoint(
+                        window,
+                        attribute: kAXPositionAttribute,
+                        value: acceptedFrame.origin
+                    )
+                }
+                lastAppliedFrame = CGRect(
+                    origin: changesPosition ? acceptedFrame.origin : originalFrame.origin,
+                    size: acceptedSize
+                )
+
+                if isFinalFrame {
+                    break
+                }
+            }
+            try checkCancellation(for: generation)
+        } catch {
+            await ticker.stop()
+            throw error
+        }
+
+        await ticker.stop()
+        return lastAppliedFrame
+    }
+
+    private func checkCancellation(for generation: UInt64) throws {
+        try Task.checkCancellation()
+        guard generation == operationGeneration else {
+            throw CancellationError()
+        }
+    }
+
+    private func pointsAreEquivalent(
+        _ lhs: CGPoint,
+        _ rhs: CGPoint,
+        tolerance: CGFloat = 0.5
+    ) -> Bool {
+        abs(lhs.x - rhs.x) <= tolerance
+            && abs(lhs.y - rhs.y) <= tolerance
     }
 
     private func disableEnhancedUserInterfaceIfNeeded(_ application: AXUIElement) -> Bool {
@@ -378,4 +518,5 @@ actor AccessibilityWindowController {
 private struct WindowActionContext: Sendable {
     let processIdentifier: pid_t
     let screens: [ScreenDescriptor]
+    let shouldAnimate: Bool
 }
