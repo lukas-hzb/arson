@@ -204,6 +204,7 @@ fi
 
 unregister_build_copies
 remove_repository_build_copies
+"$LSREGISTER" -gc >/dev/null 2>&1 || true
 "$LSREGISTER" -f "$INSTALL_APP" >/dev/null
 
 if $reset_onboarding; then
