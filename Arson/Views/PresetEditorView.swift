@@ -95,7 +95,8 @@ struct PresetEditorView: View {
                 LabeledContent {
                     VStack(alignment: .trailing, spacing: 5) {
                         HotKeyRecorderView(shortcut: $preset.shortcut)
-                            .frame(width: 150, height: 28)
+                            .fixedSize(horizontal: true, vertical: false)
+                            .frame(height: 28)
 
                         if let hotKeyError {
                             ValidationMessage(hotKeyError)
@@ -150,7 +151,7 @@ private struct DimensionRuleEditor: View {
                         Text("dimension.percent").tag(DimensionMode.percent)
                     }
                     .labelsHidden()
-                    .frame(width: 135)
+                    .fixedSize(horizontal: true, vertical: false)
 
                     if rule.mode != .unchanged {
                         NumericStepper(
@@ -250,11 +251,11 @@ private struct NumericStepper: View {
         HStack(spacing: 6) {
             stepper
                 .labelsHidden()
-                .frame(width: 112)
+                .fixedSize(horizontal: true, vertical: false)
 
             Text(unit)
                 .foregroundStyle(.secondary)
-                .frame(width: 32, alignment: .leading)
+                .fixedSize(horizontal: true, vertical: false)
                 .accessibilityHidden(true)
         }
     }
