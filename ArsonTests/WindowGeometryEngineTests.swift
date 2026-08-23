@@ -94,37 +94,36 @@ struct WindowGeometryEngineTests {
         }
     }
 
-    @Test func animationCurveStartsAndEndsExactly() {
-        #expect(WindowAnimationCurve.snap(-1) == 0)
-        #expect(WindowAnimationCurve.snap(0) == 0)
-        #expect(WindowAnimationCurve.snap(1) == 1)
-        #expect(WindowAnimationCurve.snap(2) == 1)
+    @Test func sizeAndPositionUseTheCompatibilitySequence() {
+        #expect(
+            WindowMutationStrategy.steps(changesSize: true, changesPosition: true)
+                == [.size, .position, .size]
+        )
     }
 
-    @Test func animationCurveMovesQuicklyAndSettlesWithoutOvershoot() {
-        let firstQuarter = WindowAnimationCurve.snap(0.25)
-        let halfway = WindowAnimationCurve.snap(0.5)
-        let lastQuarter = WindowAnimationCurve.snap(0.75)
-
-        #expect(firstQuarter > 0.5)
-        #expect(halfway > firstQuarter)
-        #expect(lastQuarter > 0.75)
-        #expect(lastQuarter < 1)
+    @Test func singleDimensionOfAFrameUsesOnlyTheNecessaryMutation() {
+        #expect(
+            WindowMutationStrategy.steps(changesSize: true, changesPosition: false)
+                == [.size]
+        )
+        #expect(
+            WindowMutationStrategy.steps(changesSize: false, changesPosition: true)
+                == [.position]
+        )
     }
 
-    @Test func animationInterpolatesPositionAndSize() {
-        let position = WindowAnimationCurve.interpolate(
-            from: CGPoint(x: 100, y: 200),
-            to: CGPoint(x: 500, y: 600),
-            progress: 0.25
+    @Test func sizeComparisonAllowsSubpixelRoundingOnly() {
+        #expect(
+            WindowMutationStrategy.sizesAreEquivalent(
+                CGSize(width: 400, height: 600),
+                CGSize(width: 400.4, height: 599.6)
+            )
         )
-        let size = WindowAnimationCurve.interpolate(
-            from: CGSize(width: 800, height: 500),
-            to: CGSize(width: 400, height: 300),
-            progress: 0.25
+        #expect(
+            !WindowMutationStrategy.sizesAreEquivalent(
+                CGSize(width: 400, height: 600),
+                CGSize(width: 401, height: 600)
+            )
         )
-
-        #expect(position == CGPoint(x: 200, y: 300))
-        #expect(size == CGSize(width: 700, height: 450))
     }
 }

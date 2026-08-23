@@ -1,4 +1,3 @@
-import AppKit
 import Combine
 import Foundation
 
@@ -59,12 +58,9 @@ final class AppModel: ObservableObject {
         windowActionTask = Task { @MainActor [weak self] in
             guard let self else { return }
             do {
-                _ = try await windowController.apply(
-                    preset,
-                    animated: !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-                )
+                _ = try await windowController.apply(preset)
             } catch is CancellationError {
-                // A newer preset replaces an animation already in progress.
+                // A newer preset replaces a pending window operation.
             } catch {
                 hud.show(message: error.localizedDescription, on: nil)
             }

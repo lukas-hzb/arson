@@ -7,8 +7,8 @@ struct ScreenDescriptor: Equatable, Sendable {
     let visibleFrame: CGRect
 }
 
-@MainActor
 struct ScreenCoordinateConverter {
+    @MainActor
     func screens() -> [ScreenDescriptor] {
         let primaryHeight = NSScreen.screens
             .first(where: { $0.frame.origin == .zero })?
@@ -26,8 +26,16 @@ struct ScreenCoordinateConverter {
         }
     }
 
+    @MainActor
     func screen(containing windowFrame: CGRect) -> ScreenDescriptor? {
-        screens().max { lhs, rhs in
+        Self.screen(containing: windowFrame, in: screens())
+    }
+
+    static func screen(
+        containing windowFrame: CGRect,
+        in screens: [ScreenDescriptor]
+    ) -> ScreenDescriptor? {
+        screens.max { lhs, rhs in
             intersectionArea(lhs.frame, windowFrame) < intersectionArea(rhs.frame, windowFrame)
         }
     }
@@ -41,7 +49,7 @@ struct ScreenCoordinateConverter {
         )
     }
 
-    private func intersectionArea(_ lhs: CGRect, _ rhs: CGRect) -> CGFloat {
+    private static func intersectionArea(_ lhs: CGRect, _ rhs: CGRect) -> CGFloat {
         let intersection = lhs.intersection(rhs)
         guard !intersection.isNull else { return 0 }
         return intersection.width * intersection.height
