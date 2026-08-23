@@ -6,6 +6,7 @@ readonly SCRIPT_DIRECTORY="${0:A:h}"
 readonly REPOSITORY_ROOT="${SCRIPT_DIRECTORY:h}"
 readonly INSTALL_APP="/Applications/Arson.app"
 readonly BUNDLE_IDENTIFIER="de.lukasharzbecker.arson"
+readonly UI_TEST_RUNNER_BUNDLE_IDENTIFIER="de.lukasharzbecker.arson.uitests.xctrunner"
 readonly ONBOARDING_KEY="completedOnboardingVersion"
 readonly LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
 readonly ARSON_XCODE_APP="${ARSON_XCODE_APP:-/Applications/Xcode.app}"
@@ -84,7 +85,7 @@ unregister_build_copies() {
     if [[ -d "${REPOSITORY_ROOT}/DerivedData" ]]; then
         while IFS= read -r candidate; do
             unregister_app "$candidate"
-        done < <(/usr/bin/find "${REPOSITORY_ROOT}/DerivedData" -type d -name Arson.app -prune -print)
+        done < <(/usr/bin/find "${REPOSITORY_ROOT}/DerivedData" -type d \( -name Arson.app -o -name ArsonUITests-Runner.app \) -prune -print)
     fi
 
     while IFS= read -r candidate; do
@@ -92,6 +93,12 @@ unregister_build_copies() {
             unregister_app "$candidate"
         fi
     done < <(/usr/bin/mdfind "kMDItemCFBundleIdentifier == '${BUNDLE_IDENTIFIER}'" 2>/dev/null || true)
+
+    while IFS= read -r candidate; do
+        if [[ -n "$candidate" ]]; then
+            unregister_app "$candidate"
+        fi
+    done < <(/usr/bin/mdfind "kMDItemCFBundleIdentifier == '${UI_TEST_RUNNER_BUNDLE_IDENTIFIER}'" 2>/dev/null || true)
 }
 
 run_for_applications_directory() {
