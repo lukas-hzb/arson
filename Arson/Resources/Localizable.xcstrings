@@ -105,6 +105,7 @@
     "settings.menuBarIcon" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Menüleistensymbol" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Menu Bar Icon" } } } },
     "settings.menuBarIconFlame" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Flamme" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Flame" } } } },
     "settings.menuBarIconWindows" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Fenster" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Windows" } } } },
+    "settings.menuBarSection" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Menüleiste" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Menu Bar" } } } },
     "settings.permission" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Berechtigung" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Permission" } } } },
     "settings.showMenuBar" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Menüleistensymbol anzeigen" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Show Menu Bar Icon" } } } },
     "language.english" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Englisch" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "English" } } } },

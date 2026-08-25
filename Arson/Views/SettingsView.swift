@@ -10,19 +10,6 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("settings.general") {
-                Toggle("settings.showMenuBar", isOn: $showMenuBarItem)
-                    .accessibilityIdentifier("showMenuBarItemToggle")
-                Picker("settings.menuBarIcon", selection: $menuBarIconStyle) {
-                    Label("settings.menuBarIconWindows", systemImage: "rectangle.on.rectangle")
-                        .tag(MenuBarIconStyle.windows)
-                    Label("settings.menuBarIconFlame", image: "MenuBarFlame")
-                        .tag(MenuBarIconStyle.flame)
-                }
-                .disabled(!showMenuBarItem)
-                .accessibilityIdentifier("menuBarIconPicker")
-                Text("settings.menuBarBackgroundHelp")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
                 Toggle(
                     "settings.launchAtLogin",
                     isOn: Binding(
@@ -34,6 +21,22 @@ struct SettingsView: View {
                     Label(error, systemImage: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
                 }
+            }
+
+            Section("settings.menuBarSection") {
+                Toggle("settings.showMenuBar", isOn: $showMenuBarItem)
+                    .accessibilityIdentifier("showMenuBarItemToggle")
+                Picker("settings.menuBarIcon", selection: $menuBarIconStyle) {
+                    MenuBarIconPickerLabel(style: .windows)
+                        .tag(MenuBarIconStyle.windows)
+                    MenuBarIconPickerLabel(style: .flame)
+                        .tag(MenuBarIconStyle.flame)
+                }
+                .disabled(!showMenuBarItem)
+                .accessibilityIdentifier("menuBarIconPicker")
+                Text("settings.menuBarBackgroundHelp")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
 
             Section("settings.languageSection") {
@@ -89,5 +92,40 @@ struct SettingsView: View {
             string: "x-apple.systempreferences:com.apple.Localization"
         ) else { return }
         NSWorkspace.shared.open(url)
+    }
+}
+
+private struct MenuBarIconPickerLabel: View {
+    let style: MenuBarIconStyle
+
+    var body: some View {
+        HStack(spacing: 6) {
+            icon
+                .frame(width: 14, height: 14)
+            Text(title)
+        }
+    }
+
+    @ViewBuilder
+    private var icon: some View {
+        switch style {
+        case .windows:
+            Image(systemName: "rectangle.on.rectangle")
+                .imageScale(.small)
+        case .flame:
+            Image("MenuBarFlame")
+                .resizable()
+                .renderingMode(.template)
+                .scaledToFit()
+        }
+    }
+
+    private var title: LocalizedStringKey {
+        switch style {
+        case .windows:
+            "settings.menuBarIconWindows"
+        case .flame:
+            "settings.menuBarIconFlame"
+        }
     }
 }

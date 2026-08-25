@@ -14,7 +14,6 @@ struct MenuBarIconStyleTests {
         let image = try #require(NSImage(named: "MenuBarFlame"))
 
         #expect(image.isTemplate)
-        #expect(image.size.width > 0)
-        #expect(image.size.height > 0)
+        #expect(image.size == NSSize(width: 18, height: 18))
     }
 }
