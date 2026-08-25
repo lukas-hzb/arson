@@ -101,11 +101,15 @@ private struct MenuBarIconPickerLabel: View {
     let style: MenuBarIconStyle
 
     var body: some View {
-        HStack(spacing: 6) {
-            icon
-                .frame(width: 14, height: 14)
+        Label {
             Text(title)
+        } icon: {
+            icon
+                .frame(width: Metrics.iconSlot, height: Metrics.iconSlot)
         }
+        .labelStyle(.titleAndIcon)
+        .labelReservedIconWidth(Metrics.iconSlot)
+        .labelIconToTitleSpacing(Metrics.iconToTitleSpacing)
     }
 
     @ViewBuilder
@@ -113,12 +117,13 @@ private struct MenuBarIconPickerLabel: View {
         switch style {
         case .windows:
             Image(systemName: "rectangle.on.rectangle")
-                .imageScale(.small)
+                .font(.system(size: Metrics.systemSymbolSize, weight: .regular))
         case .flame:
             Image("MenuBarFlame")
                 .resizable()
                 .renderingMode(.template)
                 .scaledToFit()
+                .frame(width: Metrics.customIconSize, height: Metrics.customIconSize)
         }
     }
 
@@ -129,5 +134,12 @@ private struct MenuBarIconPickerLabel: View {
         case .flame:
             "settings.menuBarIconFlame"
         }
+    }
+
+    private enum Metrics {
+        static let iconSlot: CGFloat = 18
+        static let iconToTitleSpacing: CGFloat = 8
+        static let systemSymbolSize: CGFloat = 14
+        static let customIconSize: CGFloat = 15
     }
 }
