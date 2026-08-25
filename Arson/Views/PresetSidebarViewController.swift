@@ -19,12 +19,14 @@ final class PresetSidebarViewController: NSViewController {
     private let store: PresetStore
     private let selection: PresetSelection
     private let tableView = NSTableView()
+    private var displayedPresets: [Preset]
     private var observations: Set<AnyCancellable> = []
 
     init(model: AppModel, selection: PresetSelection) {
         self.model = model
         store = model.store
         self.selection = selection
+        displayedPresets = model.store.presets
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -64,8 +66,8 @@ final class PresetSidebarViewController: NSViewController {
         super.viewDidLoad()
 
         store.$presets
-            .sink { [weak self] _ in
-                self?.reloadPresets()
+            .sink { [weak self] presets in
+                self?.reloadPresets(with: presets)
             }
             .store(in: &observations)
 
@@ -77,14 +79,15 @@ final class PresetSidebarViewController: NSViewController {
             .store(in: &observations)
     }
 
-    private func reloadPresets() {
+    private func reloadPresets(with presets: [Preset]) {
+        displayedPresets = presets
         tableView.reloadData()
         selectRow(for: selection.selectedID)
     }
 
     private func selectRow(for presetID: UUID?) {
         guard let presetID,
-              let row = store.presets.firstIndex(where: { $0.id == presetID }) else {
+              let row = displayedPresets.firstIndex(where: { $0.id == presetID }) else {
             tableView.deselectAll(nil)
             return
         }
@@ -103,8 +106,8 @@ final class PresetSidebarViewController: NSViewController {
 
     private func presetIDForContextMenu() -> UUID? {
         let row = tableView.clickedRow >= 0 ? tableView.clickedRow : tableView.selectedRow
-        guard store.presets.indices.contains(row) else { return nil }
-        return store.presets[row].id
+        guard displayedPresets.indices.contains(row) else { return nil }
+        return displayedPresets[row].id
     }
 
     @objc private func duplicateFromContextMenu(_ sender: NSMenuItem) {
@@ -120,7 +123,7 @@ final class PresetSidebarViewController: NSViewController {
 
 extension PresetSidebarViewController: NSTableViewDataSource, NSTableViewDelegate {
     nonisolated func numberOfRows(in tableView: NSTableView) -> Int {
-        MainActor.assumeIsolated { store.presets.count }
+        MainActor.assumeIsolated { displayedPresets.count }
     }
 
     nonisolated func tableView(
@@ -129,12 +132,12 @@ extension PresetSidebarViewController: NSTableViewDataSource, NSTableViewDelegat
         row: Int
     ) -> NSView? {
         MainActor.assumeIsolated {
-            guard store.presets.indices.contains(row) else { return nil }
+            guard displayedPresets.indices.contains(row) else { return nil }
 
             let identifier = NSUserInterfaceItemIdentifier("PresetSidebarCell")
             let cell = tableView.makeView(withIdentifier: identifier, owner: self)
                 as? PresetSidebarCellView ?? PresetSidebarCellView(identifier: identifier)
-            let preset = store.presets[row]
+            let preset = displayedPresets[row]
             cell.configure(
                 preset: preset,
                 hasError: !model.validationMessages(for: preset).isEmpty
@@ -146,11 +149,11 @@ extension PresetSidebarViewController: NSTableViewDataSource, NSTableViewDelegat
     nonisolated func tableViewSelectionDidChange(_ notification: Notification) {
         MainActor.assumeIsolated {
             let row = tableView.selectedRow
-            guard store.presets.indices.contains(row) else {
+            guard displayedPresets.indices.contains(row) else {
                 selection.selectedID = nil
                 return
             }
-            selection.selectedID = store.presets[row].id
+            selection.selectedID = displayedPresets[row].id
         }
     }
 
@@ -159,8 +162,8 @@ extension PresetSidebarViewController: NSTableViewDataSource, NSTableViewDelegat
         pasteboardWriterForRow row: Int
     ) -> (any NSPasteboardWriting)? {
         let presetID: String? = MainActor.assumeIsolated {
-            guard store.presets.indices.contains(row) else { return nil }
-            return store.presets[row].id.uuidString
+            guard displayedPresets.indices.contains(row) else { return nil }
+            return displayedPresets[row].id.uuidString
         }
         guard let presetID else { return nil }
         let item = NSPasteboardItem()

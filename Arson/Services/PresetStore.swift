@@ -39,15 +39,25 @@ final class PresetStore: ObservableObject {
     init(fileURL: URL? = nil, seedPresets: @autoclosure () -> [Preset] = Preset.seedPresets()) {
         self.fileURL = fileURL ?? Self.defaultFileURL()
         self.presets = []
+        var shouldSaveMigration = false
         isLoading = true
         do {
-            presets = try Self.load(from: self.fileURL) ?? seedPresets()
+            if let storedPresets = try Self.load(from: self.fileURL) {
+                let migratedPresets = Self.migrateLegacySeedNames(in: storedPresets)
+                presets = migratedPresets
+                shouldSaveMigration = migratedPresets != storedPresets
+            } else {
+                presets = seedPresets()
+            }
         } catch {
             presets = seedPresets()
             lastError = error.localizedDescription
             logger.error("Unable to load preset data: \(error.localizedDescription, privacy: .private)")
         }
         isLoading = false
+        if shouldSaveMigration {
+            save()
+        }
     }
 
     func addPreset() -> UUID {
@@ -114,6 +124,33 @@ final class PresetStore: ObservableObject {
             throw PresetStoreError.unsupportedSchema(envelope.schemaVersion)
         }
         return envelope.presets
+    }
+
+    static func migrateLegacySeedNames(in presets: [Preset]) -> [Preset] {
+        let legacyFixedNames = [
+            "400 × 600 – Centered",
+            "400 × 600 – Zentriert"
+        ]
+        let legacyPercentNames = [
+            "90% × 70% – Centered",
+            "90 % × 70 % – Zentriert"
+        ]
+        let legacyOffsetNames = [
+            "60 right and down",
+            "60 nach rechts und unten"
+        ]
+
+        return presets.map { preset in
+            var migrated = preset
+            if legacyFixedNames.contains(preset.name) {
+                migrated.name = String(localized: "preset.seed.fixed")
+            } else if legacyPercentNames.contains(preset.name) {
+                migrated.name = String(localized: "preset.seed.percent")
+            } else if legacyOffsetNames.contains(preset.name) {
+                migrated.name = String(localized: "preset.seed.offset")
+            }
+            return migrated
+        }
     }
 
     private func restore(_ preset: Preset, at index: Int, undoManager: UndoManager?) {

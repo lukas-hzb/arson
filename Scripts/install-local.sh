@@ -74,13 +74,50 @@ quit_all_arson_processes() {
 
 unregister_app() {
     local app_path="$1"
-    if [[ -d "$app_path" ]]; then
-        "$LSREGISTER" -u "$app_path" >/dev/null 2>&1 || true
-    fi
+    [[ -n "$app_path" ]] || return
+    "$LSREGISTER" -u "$app_path" >/dev/null 2>&1 || true
+}
+
+registered_arson_app_paths() {
+    "$LSREGISTER" -dump 2>/dev/null | /usr/bin/awk \
+        -v app_identifier="$BUNDLE_IDENTIFIER" \
+        -v runner_identifier="$UI_TEST_RUNNER_BUNDLE_IDENTIFIER" '
+        function emit() {
+            if ((identifier == app_identifier || identifier == runner_identifier) && path != "") {
+                print path
+            }
+            path = ""
+            identifier = ""
+        }
+        /^-{20,}$/ {
+            emit()
+            next
+        }
+        /^path:/ {
+            path = $0
+            sub(/^[^:]*:[[:space:]]*/, "", path)
+            sub(/[[:space:]]+\(0x[[:xdigit:]]+\)$/, "", path)
+            next
+        }
+        /^identifier:/ {
+            identifier = $0
+            sub(/^[^:]*:[[:space:]]*/, "", identifier)
+            next
+        }
+        END {
+            emit()
+        }
+    '
 }
 
 unregister_build_copies() {
     local candidate
+
+    while IFS= read -r candidate; do
+        if [[ -n "$candidate" && "$candidate" != "$INSTALL_APP" ]]; then
+            unregister_app "$candidate"
+        fi
+    done < <(registered_arson_app_paths)
 
     if [[ -d "${REPOSITORY_ROOT}/DerivedData" ]]; then
         while IFS= read -r candidate; do
@@ -215,7 +252,11 @@ fi
 /usr/bin/killall Dock >/dev/null 2>&1 || true
 
 if $open_after_install; then
-    /usr/bin/open "$INSTALL_APP"
+    if $reset_onboarding; then
+        /usr/bin/open "$INSTALL_APP" --args -show-onboarding
+    else
+        /usr/bin/open "$INSTALL_APP"
+    fi
 fi
 
 print -- "Installed the current build at ${INSTALL_APP}."

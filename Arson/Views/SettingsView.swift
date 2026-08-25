@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct SettingsView: View {
@@ -19,6 +20,21 @@ struct SettingsView: View {
                     Label(error, systemImage: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
                 }
+            }
+
+            Section("settings.languageSection") {
+                HStack(spacing: 8) {
+                    Text("settings.language")
+                    Spacer()
+                    Text(currentLanguageName)
+                        .foregroundStyle(.secondary)
+                    Button("settings.languageChange") {
+                        openLanguageSettings()
+                    }
+                }
+                Text("settings.languageHelp")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
             }
 
             Section("settings.permission") {
@@ -45,5 +61,19 @@ struct SettingsView: View {
             model.loginItem.refresh()
         }
     }
-}
 
+    private var currentLanguageName: String {
+        let identifier = Bundle.main.preferredLocalizations.first ?? "en"
+        if identifier.lowercased().hasPrefix("de") {
+            return String(localized: "language.german")
+        }
+        return String(localized: "language.english")
+    }
+
+    private func openLanguageSettings() {
+        guard let url = URL(
+            string: "x-apple.systempreferences:com.apple.Localization"
+        ) else { return }
+        NSWorkspace.shared.open(url)
+    }
+}

@@ -7,7 +7,7 @@ final class ArsonUITests: XCTestCase {
 
         let app = XCUIApplication()
         app.launchArguments = [
-            "-completedOnboardingVersion", "1",
+            "-completedOnboardingVersion", "2",
             "-AppleLanguages", "(en)",
             "-AppleLocale", "en_US"
         ]
@@ -37,7 +37,7 @@ final class ArsonUITests: XCTestCase {
 
         let app = XCUIApplication()
         app.launchArguments = [
-            "-completedOnboardingVersion", "1",
+            "-completedOnboardingVersion", "2",
             "-AppleLanguages", "(en)",
             "-AppleLocale", "en_US"
         ]
@@ -73,7 +73,7 @@ final class ArsonUITests: XCTestCase {
 
         let app = XCUIApplication()
         app.launchArguments = [
-            "-completedOnboardingVersion", "1",
+            "-completedOnboardingVersion", "2",
             "-AppleLanguages", "(en)",
             "-AppleLocale", "en_US"
         ]
@@ -95,19 +95,42 @@ final class ArsonUITests: XCTestCase {
         continueAfterFailure = false
 
         let app = XCUIApplication()
-        app.launchArguments = ["-ui-testing-reset", "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launchArguments = [
+            "-ui-testing-reset",
+            "-ui-testing-permission-untrusted",
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US"
+        ]
         app.launchEnvironment["ARSON_TEST_STORAGE_DIRECTORY"] = NSTemporaryDirectory()
             + "ArsonUITests-\(UUID().uuidString)"
         app.terminate()
         app.launch()
 
+        let mainWindow = app.windows["ArsonMainWindow"]
+        XCTAssertTrue(mainWindow.waitForExistence(timeout: 5))
+        let initialFrame = mainWindow.frame
+
         XCTAssertTrue(app.staticTexts["Welcome to Arson"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["Add Preset"].exists)
+        app.buttons["Get Started"].click()
+
+        XCTAssertTrue(app.staticTexts["Control Other App Windows"].waitForExistence(timeout: 3))
+        assertEqual(initialFrame, mainWindow.frame)
+        XCTAssertTrue(app.buttons["Continue"].exists)
+        XCTAssertFalse(app.buttons["Request Access"].exists)
+        XCTAssertFalse(app.staticTexts["System Settings › Privacy & Security › Device Control & Data Access"].exists)
         app.buttons["Continue"].click()
 
-        XCTAssertTrue(app.staticTexts["Allow Window Control"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["System Settings › Privacy & Security › Device Control & Data Access"].exists)
-        XCTAssertTrue(app.buttons["Request Access"].exists)
-        app.buttons["Later"].click()
+        XCTAssertTrue(app.staticTexts["Enable Arson in System Settings"].waitForExistence(timeout: 3))
+        assertEqual(initialFrame, mainWindow.frame)
+        XCTAssertTrue(app.staticTexts["Waiting for permission…"].exists)
+        XCTAssertTrue(app.buttons["Open System Settings"].exists)
+        XCTAssertTrue(app.buttons["Continue Without Permission"].exists)
+        XCTAssertFalse(app.staticTexts["System Settings › Privacy & Security › Device Control & Data Access"].exists)
+
+        app.disclosureTriangles["Having Trouble?"].click()
+        XCTAssertTrue(app.staticTexts["System Settings › Privacy & Security › Device Control & Data Access"].waitForExistence(timeout: 2))
+        app.buttons["Continue Without Permission"].click()
 
         let addButton = app.buttons["Add Preset"]
         XCTAssertTrue(addButton.waitForExistence(timeout: 3))
@@ -115,6 +138,10 @@ final class ArsonUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Delete"].exists)
         addButton.click()
 
+        assertEqual(initialFrame, mainWindow.frame)
+        XCTAssertGreaterThanOrEqual(mainWindow.frame.width, 720)
+        XCTAssertGreaterThanOrEqual(mainWindow.frame.height, 480)
+        XCTAssertTrue(app.cells["New Preset"].waitForExistence(timeout: 2))
         XCTAssertTrue(app.textFields["presetNameField"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["X offset"].exists)
         XCTAssertTrue(app.staticTexts["Y offset"].exists)
@@ -173,5 +200,16 @@ final class ArsonUITests: XCTestCase {
             }
             return false
         }
+    }
+
+    private func assertEqual(
+        _ expected: CGRect,
+        _ actual: CGRect,
+        accuracy: CGFloat = 1
+    ) {
+        XCTAssertEqual(actual.origin.x, expected.origin.x, accuracy: accuracy)
+        XCTAssertEqual(actual.origin.y, expected.origin.y, accuracy: accuracy)
+        XCTAssertEqual(actual.width, expected.width, accuracy: accuracy)
+        XCTAssertEqual(actual.height, expected.height, accuracy: accuracy)
     }
 }

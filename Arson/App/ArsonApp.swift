@@ -10,5 +10,13 @@ struct ArsonApp: App {
                 .environmentObject(appDelegate.model)
                 .onAppear { appDelegate.markWindowVisible() }
         }
+        .commands {
+            CommandGroup(after: .help) {
+                Divider()
+                Button("menu.showIntroduction") {
+                    appDelegate.showIntroduction()
+                }
+            }
+        }
     }
 }

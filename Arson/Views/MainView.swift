@@ -10,13 +10,9 @@ struct MainView: View {
 }
 
 private struct PresetDetailView: View {
-    private static let currentOnboardingVersion = 1
-
     @ObservedObject var model: AppModel
     @ObservedObject var store: PresetStore
     @ObservedObject var selection: PresetSelection
-    @State private var requiresUITestOnboarding = ProcessInfo.processInfo.arguments.contains("-ui-testing-reset")
-    @AppStorage("completedOnboardingVersion") private var completedOnboardingVersion = 0
 
     var body: some View {
         Group {
@@ -40,27 +36,5 @@ private struct PresetDetailView: View {
                 selection.selectedID = store.presets.first?.id
             }
         }
-        .sheet(isPresented: onboardingPresented) {
-            OnboardingView {
-                requiresUITestOnboarding = false
-                completedOnboardingVersion = Self.currentOnboardingVersion
-            }
-            .environmentObject(model)
-        }
-    }
-
-    private var onboardingPresented: Binding<Bool> {
-        Binding(
-            get: {
-                requiresUITestOnboarding
-                    || completedOnboardingVersion < Self.currentOnboardingVersion
-            },
-            set: {
-                if !$0 {
-                    requiresUITestOnboarding = false
-                    completedOnboardingVersion = Self.currentOnboardingVersion
-                }
-            }
-        )
     }
 }

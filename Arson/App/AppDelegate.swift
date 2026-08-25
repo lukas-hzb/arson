@@ -8,9 +8,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBarController: MenuBarController?
 
     override init() {
-        if ProcessInfo.processInfo.arguments.contains("-ui-testing-reset") {
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains("-ui-testing-reset")
+            || arguments.contains("-show-onboarding") {
             UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
             UserDefaults.standard.removeObject(forKey: "completedOnboardingVersion")
+        }
+        if arguments.contains("-ui-testing-reset") {
             UserDefaults.standard.set(true, forKey: "showMenuBarItem")
         }
         super.init()
@@ -55,6 +59,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if mainWindowController == nil {
             mainWindowController = MainWindowController(model: model)
         }
+        mainWindowController?.prepareForPresentation()
         mainWindowController?.showWindow(nil)
         mainWindowController?.window?.makeKeyAndOrderFront(nil)
         Task { @MainActor [weak self] in
@@ -63,6 +68,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             await Task.yield()
             self?.mainWindowController?.installPresetMenuIfNeeded()
         }
+    }
+
+    func showIntroduction() {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        if mainWindowController == nil {
+            mainWindowController = MainWindowController(model: model)
+        }
+        mainWindowController?.prepareForPresentation()
+        mainWindowController?.showOnboarding()
+        mainWindowController?.showWindow(nil)
+        mainWindowController?.window?.makeKeyAndOrderFront(nil)
     }
 
     func markWindowVisible() {

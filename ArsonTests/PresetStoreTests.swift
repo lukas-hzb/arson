@@ -10,6 +10,11 @@ struct PresetStoreTests {
 
         #expect(store.presets.count == 3)
         #expect(store.presets.allSatisfy { $0.shortcut == nil })
+        #expect(store.presets.map(\.name) == [
+            String(localized: "preset.seed.fixed"),
+            String(localized: "preset.seed.percent"),
+            String(localized: "preset.seed.offset")
+        ])
     }
 
     @Test func savesAndLoadsRoundTrip() throws {
@@ -54,6 +59,58 @@ struct PresetStoreTests {
         #expect(throws: PresetStoreError.self) {
             try PresetStore.load(from: url)
         }
+    }
+
+    @Test func migratesOnlyLegacySeedNames() throws {
+        let url = temporaryFileURL()
+        let shortcut = HotKeyShortcut(
+            keyCode: 19,
+            modifiers: [.command, .option],
+            keyLabel: "2"
+        )
+        let fixedID = UUID()
+        let legacyPresets = [
+            Preset(
+                id: fixedID,
+                name: "400 × 600 – Centered",
+                width: .percent(78),
+                height: .percent(77),
+                position: .center,
+                shortcut: shortcut
+            ),
+            Preset(
+                name: "90 % × 70 % – Zentriert",
+                width: .percent(90),
+                height: .percent(70),
+                position: .center
+            ),
+            Preset(
+                name: "60 right and down",
+                offsetX: 60,
+                offsetY: 60
+            ),
+            Preset(
+                name: "Reading",
+                width: .points(400),
+                height: .points(600),
+                position: .center
+            )
+        ]
+
+        let legacyStore = PresetStore(fileURL: url, seedPresets: legacyPresets)
+        legacyStore.save()
+        let migratedStore = PresetStore(fileURL: url)
+
+        #expect(migratedStore.presets[0].id == fixedID)
+        #expect(migratedStore.presets[0].shortcut == shortcut)
+        #expect(migratedStore.presets[0].name == String(localized: "preset.seed.fixed"))
+        #expect(migratedStore.presets[1].name == String(localized: "preset.seed.percent"))
+        #expect(migratedStore.presets[2].name == String(localized: "preset.seed.offset"))
+        #expect(migratedStore.presets[3].name == "Reading")
+
+        let loadedPresets = try PresetStore.load(from: url)
+        let persistedPresets = try #require(loadedPresets)
+        #expect(persistedPresets == migratedStore.presets)
     }
 
     private func temporaryFileURL() -> URL {

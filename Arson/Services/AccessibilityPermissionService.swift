@@ -4,13 +4,23 @@ import Combine
 
 @MainActor
 final class AccessibilityPermissionService: ObservableObject {
-    @Published private(set) var isTrusted = AXIsProcessTrusted()
+    @Published private(set) var isTrusted: Bool
+
+    private let forcesMissingPermissionForUITesting: Bool
+
+    init() {
+        forcesMissingPermissionForUITesting = ProcessInfo.processInfo.arguments.contains(
+            "-ui-testing-permission-untrusted"
+        )
+        isTrusted = forcesMissingPermissionForUITesting ? false : AXIsProcessTrusted()
+    }
 
     func refresh() {
-        isTrusted = AXIsProcessTrusted()
+        isTrusted = forcesMissingPermissionForUITesting ? false : AXIsProcessTrusted()
     }
 
     func requestAccess() {
+        guard !forcesMissingPermissionForUITesting else { return }
         let options = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
         _ = AXIsProcessTrustedWithOptions(options)
         refreshSoon()
