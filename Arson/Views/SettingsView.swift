@@ -104,6 +104,7 @@ private struct MenuBarIconPopUpButton: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSPopUpButton {
         let button = NSPopUpButton(frame: .zero, pullsDown: false)
+        button.cell = MenuBarIconPopUpButtonCell(textCell: "", pullsDown: false)
         button.controlSize = .regular
         button.imagePosition = .imageLeading
         button.imageScaling = .scaleProportionallyDown
@@ -125,7 +126,9 @@ private struct MenuBarIconPopUpButton: NSViewRepresentable {
         nsView: NSPopUpButton,
         context: Context
     ) -> CGSize? {
-        nsView.intrinsicContentSize
+        var size = nsView.intrinsicContentSize
+        size.width += MenuBarIconPopUpButtonCell.additionalIconTitleSpacing
+        return size
     }
 
     private func update(_ button: NSPopUpButton) {
@@ -167,6 +170,19 @@ private struct MenuBarIconPopUpButton: NSViewRepresentable {
             guard let style = MenuBarIconStyle(tag: sender.selectedTag()) else { return }
             selection.wrappedValue = style
         }
+    }
+}
+
+private final class MenuBarIconPopUpButtonCell: NSPopUpButtonCell {
+    static let additionalIconTitleSpacing: CGFloat = 6
+
+    override func titleRect(forBounds rect: NSRect) -> NSRect {
+        var titleRect = super.titleRect(forBounds: rect)
+        guard image != nil else { return titleRect }
+
+        titleRect.origin.x += Self.additionalIconTitleSpacing
+        titleRect.size.width = max(0, titleRect.width - Self.additionalIconTitleSpacing)
+        return titleRect
     }
 }
 
@@ -214,7 +230,7 @@ private extension MenuBarIconStyle {
         sourceImage.isTemplate = true
 
         let imageSize = NSSize(
-            width: artworkSize.width + Metrics.trailingSpacing,
+            width: artworkSize.width,
             height: Metrics.imageHeight
         )
         let artworkOrigin = NSPoint(
@@ -237,7 +253,6 @@ private extension MenuBarIconStyle {
 
     private enum Metrics {
         static let flameArtworkSize = NSSize(width: 16, height: 16)
-        static let trailingSpacing: CGFloat = 6
         static let imageHeight: CGFloat = 16
     }
 }
