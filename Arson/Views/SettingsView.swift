@@ -221,7 +221,7 @@ private extension MenuBarIconStyle {
     }
 
     var closedButtonMenuItem: NSMenuItem {
-        closedButtonMenuItem(trailingSpacing: Metrics.closedIconTitleSpacing)
+        closedButtonMenuItem(trailingSpacing: Metrics.closedAdditionalIconTitleSpacing)
     }
 
     var closedButtonSizingMenuItem: NSMenuItem {
@@ -285,7 +285,9 @@ private extension MenuBarIconStyle {
         // The configured window symbol is 21 pt wide on macOS 26/27. A 22 pt
         // slot preserves it at its natural size and centers the narrower flame.
         static let closedArtworkSlotWidth: CGFloat = 22
-        static let closedIconTitleSpacing: CGFloat = 6
+        // AppKit already contributes its native image-to-title gap. Four
+        // additional points align the closed control with the menu rows.
+        static let closedAdditionalIconTitleSpacing: CGFloat = 4
         static let flameArtworkSize = NSSize(width: 16, height: 16)
         static let imageHeight: CGFloat = 16
     }
