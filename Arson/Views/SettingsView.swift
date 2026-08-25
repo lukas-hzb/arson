@@ -6,6 +6,7 @@ struct SettingsView: View {
     @AppStorage("showMenuBarItem") private var showMenuBarItem = true
     @AppStorage(MenuBarIconStyle.preferenceKey)
     private var menuBarIconStyle: MenuBarIconStyle = .windows
+    @FocusState private var focusedControl: FocusedControl?
 
     var body: some View {
         Form {
@@ -14,9 +15,21 @@ struct SettingsView: View {
                     "settings.launchAtLogin",
                     isOn: Binding(
                         get: { model.loginItem.isEnabled },
-                        set: { model.loginItem.setEnabled($0) }
+                        set: {
+                            model.loginItem.setEnabled($0)
+                            focusedControl = .launchAtLogin
+                        }
                     )
                 )
+                .focusable(false)
+                .focusable()
+                .focusEffectDisabled()
+                .focused($focusedControl, equals: .launchAtLogin)
+                .onKeyPress(.space) {
+                    model.loginItem.setEnabled(!model.loginItem.isEnabled)
+                    focusedControl = .launchAtLogin
+                    return .handled
+                }
                 if let error = model.loginItem.errorMessage {
                     Label(error, systemImage: "exclamationmark.triangle.fill")
                         .labelIconToTitleSpacing(6)
@@ -25,7 +38,25 @@ struct SettingsView: View {
             }
 
             Section("settings.menuBarSection") {
-                Toggle("settings.showMenuBar", isOn: $showMenuBarItem)
+                Toggle(
+                    "settings.showMenuBar",
+                    isOn: Binding(
+                        get: { showMenuBarItem },
+                        set: {
+                            showMenuBarItem = $0
+                            focusedControl = .showMenuBar
+                        }
+                    )
+                )
+                    .focusable(false)
+                    .focusable()
+                    .focusEffectDisabled()
+                    .focused($focusedControl, equals: .showMenuBar)
+                    .onKeyPress(.space) {
+                        showMenuBarItem.toggle()
+                        focusedControl = .showMenuBar
+                        return .handled
+                    }
                     .accessibilityIdentifier("showMenuBarItemToggle")
                 LabeledContent("settings.menuBarIcon") {
                     MenuBarIconPopUpButton(selection: $menuBarIconStyle)
@@ -76,7 +107,17 @@ struct SettingsView: View {
         .onAppear {
             model.permissions.refresh()
             model.loginItem.refresh()
+            Task { @MainActor in
+                await Task.yield()
+                focusedControl = nil
+                NSApp.keyWindow?.makeFirstResponder(nil)
+            }
         }
+    }
+
+    private enum FocusedControl: Hashable {
+        case launchAtLogin
+        case showMenuBar
     }
 
     private var currentLanguageName: String {
