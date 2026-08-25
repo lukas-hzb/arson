@@ -2,6 +2,34 @@ import XCTest
 
 final class ArsonUITests: XCTestCase {
     @MainActor
+    func testMenuBarIconUsesNativePopUpButton() {
+        continueAfterFailure = false
+
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-completedOnboardingVersion", "2",
+            "-menuBarIconStyle", "windows",
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US"
+        ]
+        app.launchEnvironment["ARSON_TEST_STORAGE_DIRECTORY"] = NSTemporaryDirectory()
+            + "ArsonUITests-\(UUID().uuidString)"
+        app.launch()
+
+        app.typeKey(",", modifierFlags: .command)
+
+        let iconPicker = app.popUpButtons["menuBarIconPicker"]
+        XCTAssertTrue(iconPicker.waitForExistence(timeout: 5))
+        XCTAssertEqual(iconPicker.value as? String, "Windows")
+
+        iconPicker.click()
+        let flameItem = app.menuItems["Flame"]
+        XCTAssertTrue(flameItem.waitForExistence(timeout: 2))
+        flameItem.click()
+        XCTAssertEqual(iconPicker.value as? String, "Flame")
+    }
+
+    @MainActor
     func testValidationMessageAppearsBeforeItsControl() {
         continueAfterFailure = false
 

@@ -27,14 +27,12 @@ struct SettingsView: View {
             Section("settings.menuBarSection") {
                 Toggle("settings.showMenuBar", isOn: $showMenuBarItem)
                     .accessibilityIdentifier("showMenuBarItemToggle")
-                Picker("settings.menuBarIcon", selection: $menuBarIconStyle) {
-                    MenuBarIconPickerLabel(style: .windows)
-                        .tag(MenuBarIconStyle.windows)
-                    MenuBarIconPickerLabel(style: .flame)
-                        .tag(MenuBarIconStyle.flame)
+                LabeledContent("settings.menuBarIcon") {
+                    MenuBarIconPopUpButton(selection: $menuBarIconStyle)
+                        .fixedSize()
+                        .accessibilityIdentifier("menuBarIconPicker")
                 }
                 .disabled(!showMenuBarItem)
-                .accessibilityIdentifier("menuBarIconPicker")
                 Text("settings.menuBarBackgroundHelp")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -97,49 +95,137 @@ struct SettingsView: View {
     }
 }
 
-private struct MenuBarIconPickerLabel: View {
-    let style: MenuBarIconStyle
+private struct MenuBarIconPopUpButton: NSViewRepresentable {
+    @Binding var selection: MenuBarIconStyle
 
-    var body: some View {
-        Label {
-            Text(title)
-        } icon: {
-            icon
-                .frame(width: Metrics.iconSlot, height: Metrics.iconSlot)
-        }
-        .labelStyle(.titleAndIcon)
-        .labelReservedIconWidth(Metrics.iconSlot)
-        .labelIconToTitleSpacing(Metrics.iconToTitleSpacing)
+    func makeCoordinator() -> Coordinator {
+        Coordinator(selection: $selection)
     }
 
-    @ViewBuilder
-    private var icon: some View {
-        switch style {
-        case .windows:
-            Image(systemName: "rectangle.on.rectangle")
-                .font(.system(size: Metrics.systemSymbolSize, weight: .regular))
-        case .flame:
-            Image("MenuBarFlame")
-                .resizable()
-                .renderingMode(.template)
-                .scaledToFit()
-                .frame(width: Metrics.customIconSize, height: Metrics.customIconSize)
+    func makeNSView(context: Context) -> NSPopUpButton {
+        let button = NSPopUpButton(frame: .zero, pullsDown: false)
+        button.controlSize = .regular
+        button.imagePosition = .imageLeading
+        button.imageScaling = .scaleProportionallyDown
+        button.autoenablesItems = false
+        button.target = context.coordinator
+        button.action = #selector(Coordinator.selectionChanged(_:))
+        button.setAccessibilityIdentifier("menuBarIconPicker")
+        update(button)
+        return button
+    }
+
+    func updateNSView(_ button: NSPopUpButton, context: Context) {
+        context.coordinator.selection = $selection
+        update(button)
+    }
+
+    func sizeThatFits(
+        _ proposal: ProposedViewSize,
+        nsView: NSPopUpButton,
+        context: Context
+    ) -> CGSize? {
+        nsView.intrinsicContentSize
+    }
+
+    private func update(_ button: NSPopUpButton) {
+        let selectedTag = selection.tag
+        let itemConfiguration = MenuBarIconStyle.allCases.map { style in
+            (style, style.localizedTitle, style.menuImage)
+        }
+
+        let itemsNeedUpdate = button.itemArray.count != itemConfiguration.count
+            || zip(button.itemArray, itemConfiguration).contains { item, configuration in
+                item.tag != configuration.0.tag || item.title != configuration.1
+            }
+
+        if itemsNeedUpdate {
+            button.removeAllItems()
+            for (style, title, image) in itemConfiguration {
+                button.addItem(withTitle: title)
+                guard let item = button.lastItem else { continue }
+                item.tag = style.tag
+                item.image = image
+            }
+        }
+
+        if button.selectedTag() != selectedTag {
+            button.selectItem(withTag: selectedTag)
+        }
+        button.synchronizeTitleAndSelectedItem()
+    }
+
+    @MainActor
+    final class Coordinator: NSObject {
+        var selection: Binding<MenuBarIconStyle>
+
+        init(selection: Binding<MenuBarIconStyle>) {
+            self.selection = selection
+        }
+
+        @objc func selectionChanged(_ sender: NSPopUpButton) {
+            guard let style = MenuBarIconStyle(tag: sender.selectedTag()) else { return }
+            selection.wrappedValue = style
+        }
+    }
+}
+
+private extension MenuBarIconStyle {
+    var tag: Int {
+        switch self {
+        case .windows: 0
+        case .flame: 1
         }
     }
 
-    private var title: LocalizedStringKey {
-        switch style {
-        case .windows:
-            "settings.menuBarIconWindows"
-        case .flame:
-            "settings.menuBarIconFlame"
+    init?(tag: Int) {
+        switch tag {
+        case 0: self = .windows
+        case 1: self = .flame
+        default: return nil
         }
+    }
+
+    var localizedTitle: String {
+        switch self {
+        case .windows:
+            String(localized: "settings.menuBarIconWindows")
+        case .flame:
+            String(localized: "settings.menuBarIconFlame")
+        }
+    }
+
+    var menuImage: NSImage? {
+        let sourceImage: NSImage?
+        switch self {
+        case .windows:
+            let configuration = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
+            sourceImage = NSImage(systemSymbolName: "rectangle.on.rectangle", accessibilityDescription: nil)?
+                .withSymbolConfiguration(configuration)
+        case .flame:
+            sourceImage = NSImage(named: "MenuBarFlame")?.copy() as? NSImage
+        }
+
+        guard let sourceImage else { return nil }
+        sourceImage.size = Metrics.artworkSize
+        sourceImage.isTemplate = true
+
+        let image = NSImage(size: Metrics.imageSize, flipped: false) { _ in
+            sourceImage.draw(
+                in: NSRect(origin: .zero, size: Metrics.artworkSize),
+                from: .zero,
+                operation: .sourceOver,
+                fraction: 1
+            )
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = nil
+        return image
     }
 
     private enum Metrics {
-        static let iconSlot: CGFloat = 18
-        static let iconToTitleSpacing: CGFloat = 8
-        static let systemSymbolSize: CGFloat = 14
-        static let customIconSize: CGFloat = 15
+        static let artworkSize = NSSize(width: 16, height: 16)
+        static let imageSize = NSSize(width: 20, height: 16)
     }
 }
