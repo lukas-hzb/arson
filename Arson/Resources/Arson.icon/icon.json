@@ -1,0 +1,110 @@
+{
+  "fill" : {
+    "automatic-gradient" : "display-p3:1.00000,0.91224,0.71524,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:1.00000,0.58253,0.14836,1.00000",
+              "display-p3:1.00000,0.24241,0.07980,1.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0.5000000000000002,
+                "y" : 0
+              },
+              "stop" : {
+                "x" : 0.5000000000000002,
+                "y" : 0.8566985901624147
+              }
+            }
+          },
+          "glass" : true,
+          "hidden" : true,
+          "image-name" : "svgviewer-output (2).svg",
+          "name" : "svgviewer-output (2)",
+          "position" : {
+            "scale" : 1.18,
+            "translation-in-points" : [
+              0,
+              -5
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    },
+    {
+      "layers" : [
+        {
+          "blend-mode" : "screen",
+          "fill" : {
+            "solid" : "display-p3:0.96783,0.67006,0.19552,1.00000"
+          },
+          "glass" : false,
+          "hidden" : false,
+          "image-name" : "svgviewer-output.svg",
+          "name" : "svgviewer-output",
+          "position" : {
+            "scale" : 0.58,
+            "translation-in-points" : [
+              0,
+              175.03301734778177
+            ]
+          }
+        },
+        {
+          "fill" : {
+            "linear-gradient" : [
+              "display-p3:1.00000,0.47463,0.19661,1.00000",
+              "display-p3:0.96783,0.12603,0.13062,1.00000"
+            ],
+            "orientation" : {
+              "start" : {
+                "x" : 0.5,
+                "y" : 0.12438532309706675
+              },
+              "stop" : {
+                "x" : 0.5,
+                "y" : 0.790706348130726
+              }
+            }
+          },
+          "image-name" : "svgviewer-output.svg",
+          "name" : "svgviewer-output",
+          "position" : {
+            "scale" : 1.21,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

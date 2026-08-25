@@ -16,7 +16,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
 
         menu.delegate = self
         observeState()
-        updateVisibility()
+        updateStatusItem()
     }
 
     func stop() {
@@ -36,7 +36,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         )
         .receive(on: DispatchQueue.main)
         .sink { [weak self] _ in
-            self?.updateVisibility()
+            self?.updateStatusItem()
         }
         .store(in: &observations)
 
@@ -51,13 +51,14 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         .store(in: &observations)
     }
 
-    private func updateVisibility() {
+    private func updateStatusItem() {
         let preference = UserDefaults.standard.object(
             forKey: Self.visibilityPreferenceKey
         ) as? Bool ?? true
 
         if preference {
             installStatusItemIfNeeded()
+            updateStatusItemImage()
         } else {
             removeStatusItem()
         }
@@ -68,12 +69,6 @@ final class MenuBarController: NSObject, NSMenuDelegate {
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = item.button {
-            let image = NSImage(
-                systemSymbolName: "rectangle.on.rectangle",
-                accessibilityDescription: "Arson"
-            )
-            image?.isTemplate = true
-            button.image = image
             button.imagePosition = .imageOnly
             button.toolTip = "Arson"
             button.setAccessibilityLabel("Arson")
@@ -81,6 +76,35 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         item.menu = menu
         statusItem = item
         rebuildMenu()
+    }
+
+    private func updateStatusItemImage() {
+        guard let button = statusItem?.button else { return }
+
+        let storedStyle = UserDefaults.standard.string(
+            forKey: MenuBarIconStyle.preferenceKey
+        )
+        let style = storedStyle.flatMap(MenuBarIconStyle.init(rawValue:)) ?? .windows
+
+        let image: NSImage?
+        switch style {
+        case .windows:
+            image = windowsImage
+        case .flame:
+            image = (NSImage(named: "MenuBarFlame")?.copy() as? NSImage) ?? windowsImage
+            image?.size = NSSize(width: 18, height: 18)
+            image?.accessibilityDescription = "Arson"
+        }
+
+        image?.isTemplate = true
+        button.image = image
+    }
+
+    private var windowsImage: NSImage? {
+        NSImage(
+            systemSymbolName: "rectangle.on.rectangle",
+            accessibilityDescription: "Arson"
+        )
     }
 
     private func removeStatusItem() {

@@ -16,6 +16,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         if arguments.contains("-ui-testing-reset") {
             UserDefaults.standard.set(true, forKey: "showMenuBarItem")
+            UserDefaults.standard.set(
+                MenuBarIconStyle.windows.rawValue,
+                forKey: MenuBarIconStyle.preferenceKey
+            )
         }
         super.init()
         Self.shared = self

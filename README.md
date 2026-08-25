@@ -2,7 +2,7 @@
 
 Arson is a native macOS utility for resizing and positioning the focused window with reusable presets and global keyboard shortcuts. It is built entirely with Swift 6, SwiftUI, AppKit, Accessibility, Carbon hot keys, and Service Management—without third-party dependencies or network access.
 
-> The current app icon is intentionally a neutral placeholder. The final icon will be supplied separately.
+The app icon uses the native Icon Composer source in the project.
 
 ## Requirements
 
@@ -58,7 +58,7 @@ The display with the greatest overlap with the focused window is used. The visib
 
 Global shortcuts require Command, Control, or Option and one non-modifier key. Shift may be added. Escape cancels recording and Delete removes a shortcut. Conflicting, reserved, or unavailable shortcuts are shown inline.
 
-Closing all Arson windows keeps the app and shortcuts running and removes the Dock icon. Use the menu bar item or open Arson again to restore the main window. `⌘Q` quits the app.
+Closing all Arson windows keeps the app and shortcuts running and removes the Dock icon. The Settings window lets you choose the menu bar symbol or hide it entirely. When hidden, Arson and its global shortcuts keep running in the background; open Arson again from Applications or Launchpad to restore the main window. `⌘Q` quits the app.
 
 ## Tests
 

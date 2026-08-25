@@ -4,11 +4,25 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject private var model: AppModel
     @AppStorage("showMenuBarItem") private var showMenuBarItem = true
+    @AppStorage(MenuBarIconStyle.preferenceKey)
+    private var menuBarIconStyle: MenuBarIconStyle = .windows
 
     var body: some View {
         Form {
             Section("settings.general") {
                 Toggle("settings.showMenuBar", isOn: $showMenuBarItem)
+                    .accessibilityIdentifier("showMenuBarItemToggle")
+                Picker("settings.menuBarIcon", selection: $menuBarIconStyle) {
+                    Label("settings.menuBarIconWindows", systemImage: "rectangle.on.rectangle")
+                        .tag(MenuBarIconStyle.windows)
+                    Label("settings.menuBarIconFlame", image: "MenuBarFlame")
+                        .tag(MenuBarIconStyle.flame)
+                }
+                .disabled(!showMenuBarItem)
+                .accessibilityIdentifier("menuBarIconPicker")
+                Text("settings.menuBarBackgroundHelp")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
                 Toggle(
                     "settings.launchAtLogin",
                     isOn: Binding(
