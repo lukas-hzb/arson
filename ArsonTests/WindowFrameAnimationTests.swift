@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 import Testing
 @testable import Arson
 
@@ -63,6 +64,94 @@ struct WindowFrameAnimationTests {
                 from: current,
                 to: CGSize(width: 500, height: 400)
             )
+        )
+    }
+
+    @Test func resizingUsesAThrottledCadenceButAlwaysAppliesTheFinalFrame() {
+        let interval = WindowFrameAnimation.resizeUpdateInterval
+
+        #expect(
+            WindowFrameAnimation.shouldApplyUpdate(
+                at: 1,
+                lastStartedAt: nil,
+                lastCompletedAt: nil,
+                changesSize: true,
+                isFinalFrame: false
+            )
+        )
+        #expect(
+            !WindowFrameAnimation.shouldApplyUpdate(
+                at: 1 + interval / 2,
+                lastStartedAt: 1,
+                lastCompletedAt: 1,
+                changesSize: true,
+                isFinalFrame: false
+            )
+        )
+        #expect(
+            WindowFrameAnimation.shouldApplyUpdate(
+                at: 1 + interval,
+                lastStartedAt: 1,
+                lastCompletedAt: 1,
+                changesSize: true,
+                isFinalFrame: false
+            )
+        )
+        #expect(
+            WindowFrameAnimation.shouldApplyUpdate(
+                at: 1 + interval / 2,
+                lastStartedAt: 1,
+                lastCompletedAt: 1,
+                changesSize: true,
+                isFinalFrame: true
+            )
+        )
+    }
+
+    @Test func resizingWaitsForRecoveryAfterASlowSynchronousMutation() {
+        let now: TimeInterval = 2
+
+        #expect(
+            !WindowFrameAnimation.shouldApplyUpdate(
+                at: now,
+                lastStartedAt: now - WindowFrameAnimation.resizeUpdateInterval,
+                lastCompletedAt: now - WindowFrameAnimation.resizeRecoveryInterval / 2,
+                changesSize: true,
+                isFinalFrame: false
+            )
+        )
+    }
+
+    @Test func pureMovementKeepsTheDisplayCadence() {
+        #expect(
+            WindowFrameAnimation.shouldApplyUpdate(
+                at: 1.001,
+                lastStartedAt: 1,
+                lastCompletedAt: 1,
+                changesSize: false,
+                isFinalFrame: false
+            )
+        )
+    }
+
+    @Test func messagesResizesImmediatelyButMessagesMovesStayAnimated() {
+        #expect(
+            WindowFrameAnimation.mode(
+                for: "com.apple.MobileSMS",
+                changesSize: true
+            ) == .immediate
+        )
+        #expect(
+            WindowFrameAnimation.mode(
+                for: "com.apple.MobileSMS",
+                changesSize: false
+            ) == .displaySynced
+        )
+        #expect(
+            WindowFrameAnimation.mode(
+                for: "com.apple.Safari",
+                changesSize: true
+            ) == .displaySynced
         )
     }
 

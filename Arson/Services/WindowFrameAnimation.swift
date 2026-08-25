@@ -1,8 +1,31 @@
 import CoreGraphics
 import Foundation
 
+enum WindowFrameAnimationMode: Equatable, Sendable {
+    case displaySynced
+    case immediate
+}
+
 struct WindowFrameAnimation: Sendable {
     static let duration: TimeInterval = 0.30
+    static let resizeUpdateInterval: TimeInterval = 1.0 / 30.0
+    static let resizeRecoveryInterval: TimeInterval = 1.0 / 60.0
+
+    private static let immediateResizeBundleIdentifiers: Set<String> = [
+        "com.apple.MobileSMS"
+    ]
+
+    static func mode(
+        for bundleIdentifier: String?,
+        changesSize: Bool
+    ) -> WindowFrameAnimationMode {
+        guard changesSize,
+              let bundleIdentifier,
+              immediateResizeBundleIdentifiers.contains(bundleIdentifier) else {
+            return .displaySynced
+        }
+        return .immediate
+    }
 
     static func easeOut(_ progress: CGFloat) -> CGFloat {
         let clamped = min(max(progress, 0), 1)
@@ -47,6 +70,27 @@ struct WindowFrameAnimation: Sendable {
     ) -> Bool {
         requestedSize.width > currentSize.width + tolerance
             || requestedSize.height > currentSize.height + tolerance
+    }
+
+    static func shouldApplyUpdate(
+        at timestamp: TimeInterval,
+        lastStartedAt startTimestamp: TimeInterval?,
+        lastCompletedAt completionTimestamp: TimeInterval?,
+        changesSize: Bool,
+        isFinalFrame: Bool
+    ) -> Bool {
+        guard changesSize, !isFinalFrame else { return true }
+
+        // A timestamp discontinuity should never prevent the animation from advancing.
+        if let startTimestamp {
+            guard timestamp >= startTimestamp else { return true }
+            guard timestamp - startTimestamp >= resizeUpdateInterval else { return false }
+        }
+        if let completionTimestamp {
+            guard timestamp >= completionTimestamp else { return true }
+            guard timestamp - completionTimestamp >= resizeRecoveryInterval else { return false }
+        }
+        return true
     }
 
     private static func interpolate(

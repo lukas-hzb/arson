@@ -126,4 +126,36 @@ struct WindowGeometryEngineTests {
             )
         )
     }
+
+    @Test func identicalFramesDoNotProduceMutations() {
+        #expect(
+            WindowMutationStrategy.plan(
+                from: original,
+                to: original,
+                positionMode: .center
+            ) == WindowMutationPlan(changesSize: false, changesPosition: false)
+        )
+    }
+
+    @Test func centeredResizeKeepsPositionAvailableForConstraintCorrection() {
+        let sameOriginWithNewSize = CGRect(
+            origin: original.origin,
+            size: CGSize(width: original.width + 100, height: original.height + 100)
+        )
+
+        #expect(
+            WindowMutationStrategy.plan(
+                from: original,
+                to: sameOriginWithNewSize,
+                positionMode: .center
+            ) == WindowMutationPlan(changesSize: true, changesPosition: true)
+        )
+        #expect(
+            WindowMutationStrategy.plan(
+                from: original,
+                to: sameOriginWithNewSize,
+                positionMode: .keep
+            ) == WindowMutationPlan(changesSize: true, changesPosition: false)
+        )
+    }
 }
