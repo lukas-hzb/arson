@@ -197,22 +197,33 @@ private extension MenuBarIconStyle {
 
     var menuImage: NSImage? {
         let sourceImage: NSImage?
+        let artworkSize: NSSize
         switch self {
         case .windows:
-            let configuration = NSImage.SymbolConfiguration(pointSize: 14, weight: .regular)
+            let configuration = NSImage.SymbolConfiguration(pointSize: 13, weight: .medium)
             sourceImage = NSImage(systemSymbolName: "rectangle.on.rectangle", accessibilityDescription: nil)?
                 .withSymbolConfiguration(configuration)
+            artworkSize = sourceImage?.size ?? .zero
         case .flame:
             sourceImage = NSImage(named: "MenuBarFlame")?.copy() as? NSImage
+            artworkSize = Metrics.flameArtworkSize
         }
 
         guard let sourceImage else { return nil }
-        sourceImage.size = Metrics.artworkSize
+        sourceImage.size = artworkSize
         sourceImage.isTemplate = true
 
-        let image = NSImage(size: Metrics.imageSize, flipped: false) { _ in
+        let imageSize = NSSize(
+            width: artworkSize.width + Metrics.trailingSpacing,
+            height: Metrics.imageHeight
+        )
+        let artworkOrigin = NSPoint(
+            x: 0,
+            y: (imageSize.height - artworkSize.height) / 2
+        )
+        let image = NSImage(size: imageSize, flipped: false) { _ in
             sourceImage.draw(
-                in: NSRect(origin: .zero, size: Metrics.artworkSize),
+                in: NSRect(origin: artworkOrigin, size: artworkSize),
                 from: .zero,
                 operation: .sourceOver,
                 fraction: 1
@@ -225,7 +236,8 @@ private extension MenuBarIconStyle {
     }
 
     private enum Metrics {
-        static let artworkSize = NSSize(width: 16, height: 16)
-        static let imageSize = NSSize(width: 20, height: 16)
+        static let flameArtworkSize = NSSize(width: 16, height: 16)
+        static let trailingSpacing: CGFloat = 4
+        static let imageHeight: CGFloat = 16
     }
 }
