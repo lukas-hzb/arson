@@ -237,7 +237,7 @@ private extension MenuBarIconStyle {
 
     private enum Metrics {
         static let flameArtworkSize = NSSize(width: 16, height: 16)
-        static let trailingSpacing: CGFloat = 4
+        static let trailingSpacing: CGFloat = 6
         static let imageHeight: CGFloat = 16
     }
 }
