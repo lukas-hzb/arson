@@ -117,6 +117,7 @@ struct OnboardingView: View {
 
             Label("onboarding.permissionPrivacy", systemImage: "lock.shield")
                 .font(.callout)
+                .labelIconToTitleSpacing(6)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 20)

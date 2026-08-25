@@ -8,18 +8,19 @@ struct PresetEditorView: View {
         Form {
             Section("editor.general") {
                 LabeledContent {
-                    VStack(alignment: .trailing, spacing: 5) {
+                    InlineValidatedControl(
+                        validationMessage: preset.name.trimmingCharacters(
+                            in: .whitespacesAndNewlines
+                        ).isEmpty
+                            ? String(localized: "validation.name")
+                            : nil
+                    ) {
                         TextField("", text: $preset.name)
                             .labelsHidden()
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 280)
                             .accessibilityLabel(Text("editor.name"))
                             .accessibilityIdentifier("presetNameField")
-
-                        if preset.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            ValidationMessage(String(localized: "validation.name"))
-                                .frame(maxWidth: 280, alignment: .leading)
-                        }
                     }
                 } label: {
                     Text("editor.name")
@@ -93,15 +94,10 @@ struct PresetEditorView: View {
 
             Section {
                 LabeledContent {
-                    VStack(alignment: .trailing, spacing: 5) {
+                    InlineValidatedControl(validationMessage: hotKeyError) {
                         HotKeyRecorderView(shortcut: $preset.shortcut)
                             .fixedSize(horizontal: true, vertical: false)
                             .frame(height: 28)
-
-                        if let hotKeyError {
-                            ValidationMessage(hotKeyError)
-                                .frame(maxWidth: 300, alignment: .leading)
-                        }
                     }
                 } label: {
                     Text("editor.globalShortcut")
@@ -143,7 +139,7 @@ private struct DimensionRuleEditor: View {
 
     var body: some View {
         LabeledContent {
-            VStack(alignment: .trailing, spacing: 5) {
+            InlineValidatedControl(validationMessage: validationMessage) {
                 HStack(spacing: 8) {
                     Picker("", selection: mode) {
                         Text("dimension.unchanged").tag(DimensionMode.unchanged)
@@ -163,11 +159,6 @@ private struct DimensionRuleEditor: View {
                             unit: rule.mode == .percent ? "%" : "unit.points"
                         )
                     }
-                }
-
-                if let validationMessage {
-                    ValidationMessage(validationMessage)
-                        .frame(maxWidth: 290, alignment: .leading)
                 }
             }
         } label: {
@@ -220,18 +211,13 @@ private struct NumberField: View {
 
     var body: some View {
         LabeledContent {
-            VStack(alignment: .trailing, spacing: 5) {
+            InlineValidatedControl(validationMessage: validationMessage) {
                 NumericStepper(
                     label: label,
                     value: $value,
                     range: nil,
                     unit: "unit.points"
                 )
-
-                if let validationMessage {
-                    ValidationMessage(validationMessage)
-                        .frame(maxWidth: 260, alignment: .leading)
-                }
             }
         } label: {
             Text(label)
@@ -283,6 +269,32 @@ private struct NumericStepper: View {
     }
 }
 
+private struct InlineValidatedControl<Control: View>: View {
+    let validationMessage: String?
+    let control: Control
+
+    init(
+        validationMessage: String?,
+        @ViewBuilder control: () -> Control
+    ) {
+        self.validationMessage = validationMessage
+        self.control = control()
+    }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 10) {
+            if let validationMessage {
+                ValidationMessage(validationMessage)
+                    .multilineTextAlignment(.trailing)
+                    .layoutPriority(1)
+            }
+
+            control
+                .fixedSize(horizontal: true, vertical: false)
+        }
+    }
+}
+
 private struct ValidationMessage: View {
     let message: String
     let color: Color
@@ -301,6 +313,7 @@ private struct ValidationMessage: View {
     var body: some View {
         Label(message, systemImage: systemImage)
             .font(.caption)
+            .labelIconToTitleSpacing(6)
             .foregroundStyle(color)
             .fixedSize(horizontal: false, vertical: true)
     }

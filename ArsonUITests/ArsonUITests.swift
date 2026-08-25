@@ -2,6 +2,31 @@ import XCTest
 
 final class ArsonUITests: XCTestCase {
     @MainActor
+    func testValidationMessageAppearsBeforeItsControl() {
+        continueAfterFailure = false
+
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-completedOnboardingVersion", "2",
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US"
+        ]
+        app.launchEnvironment["ARSON_TEST_STORAGE_DIRECTORY"] = NSTemporaryDirectory()
+            + "ArsonUITests-\(UUID().uuidString)"
+        app.launch()
+
+        let recorder = app.buttons["Record global shortcut"]
+        XCTAssertTrue(recorder.waitForExistence(timeout: 5))
+        recorder.click()
+        recorder.typeKey("1", modifierFlags: [])
+
+        let validationMessage = app.staticTexts["Use at least Command, Option, or Control."]
+        XCTAssertTrue(validationMessage.waitForExistence(timeout: 3))
+        XCTAssertLessThan(validationMessage.frame.maxX, recorder.frame.minX)
+        XCTAssertEqual(validationMessage.frame.midY, recorder.frame.midY, accuracy: 2)
+    }
+
+    @MainActor
     func testGeometryValuesUseEditableNativeSteppers() {
         continueAfterFailure = false
 

@@ -66,6 +66,7 @@ private struct HUDView: View {
     var body: some View {
         Label(message, systemImage: "exclamationmark.triangle.fill")
             .font(.headline)
+            .labelIconToTitleSpacing(6)
             .foregroundStyle(.primary)
             .padding(.horizontal, 20)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)

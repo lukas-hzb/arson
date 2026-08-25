@@ -19,6 +19,7 @@ struct SettingsView: View {
                 )
                 if let error = model.loginItem.errorMessage {
                     Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .labelIconToTitleSpacing(6)
                         .foregroundStyle(.orange)
                 }
             }
@@ -62,6 +63,7 @@ struct SettingsView: View {
                             : String(localized: "permission.missing"),
                         systemImage: model.permissions.isTrusted ? "checkmark.circle.fill" : "xmark.circle.fill"
                     )
+                    .labelIconToTitleSpacing(6)
                     .foregroundStyle(model.permissions.isTrusted ? .green : .orange)
                 }
                 HStack {
