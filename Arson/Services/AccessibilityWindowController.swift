@@ -68,7 +68,6 @@ actor AccessibilityWindowController {
             }
             return WindowActionContext(
                 processIdentifier: application.processIdentifier,
-                bundleIdentifier: application.bundleIdentifier,
                 screens: ScreenCoordinateConverter().screens(),
                 shouldAnimate: !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
             )
@@ -138,30 +137,7 @@ actor AccessibilityWindowController {
             var acceptedSize = originalSize
             var positionedForSize: CGSize?
 
-            let animationMode = WindowFrameAnimation.mode(
-                for: context.bundleIdentifier,
-                changesSize: changesSize
-            )
-
-            if animationMode == .immediate {
-                // Apps in this profile perform expensive full-hierarchy layouts for
-                // every AXSize write. One ordered final mutation is smoother than a
-                // sequence of visibly stalled intermediate frames.
-                didChangeFrame = true
-                let finalFrame = try applyImmediately(
-                    window,
-                    from: originalFrame,
-                    to: requestedFrame,
-                    positionMode: preset.position,
-                    changesSize: changesSize,
-                    changesPosition: changesPosition,
-                    generation: generation
-                )
-                acceptedSize = finalFrame.size
-                if changesPosition {
-                    positionedForSize = finalFrame.size
-                }
-            } else if context.shouldAnimate {
+            if context.shouldAnimate {
                 didChangeFrame = true
                 let finalFrame = try await animate(
                     window,
@@ -239,100 +215,6 @@ actor AccessibilityWindowController {
         }
 
         return screen
-    }
-
-    private func applyImmediately(
-        _ window: AXUIElement,
-        from originalFrame: CGRect,
-        to targetFrame: CGRect,
-        positionMode: PositionMode,
-        changesSize: Bool,
-        changesPosition: Bool,
-        generation: UInt64
-    ) throws -> CGRect {
-        var currentOrigin = originalFrame.origin
-        var acceptedSize = originalFrame.size
-        var movedAfterResize = false
-
-        if changesSize {
-            let positionBeforeResize = changesPosition
-                && WindowFrameAnimation.shouldPositionBeforeResizing(
-                    from: originalFrame.size,
-                    to: targetFrame.size
-                )
-            if positionBeforeResize,
-               !pointsAreEquivalent(currentOrigin, targetFrame.origin) {
-                try checkCancellation(for: generation)
-                try setPoint(
-                    window,
-                    attribute: kAXPositionAttribute,
-                    value: targetFrame.origin
-                )
-                currentOrigin = targetFrame.origin
-            }
-
-            try checkCancellation(for: generation)
-            try setSize(window, attribute: kAXSizeAttribute, value: targetFrame.size)
-            acceptedSize = try copySize(window, attribute: kAXSizeAttribute)
-        }
-
-        let acceptedFrame = WindowFrameAnimation.frame(
-            accepting: acceptedSize,
-            for: targetFrame,
-            positionMode: positionMode
-        )
-        if changesPosition,
-           !pointsAreEquivalent(currentOrigin, acceptedFrame.origin) {
-            try checkCancellation(for: generation)
-            try setPoint(
-                window,
-                attribute: kAXPositionAttribute,
-                value: acceptedFrame.origin
-            )
-            currentOrigin = acceptedFrame.origin
-            movedAfterResize = changesSize
-        }
-
-        if movedAfterResize {
-            // Moving to another display can constrain the frame after AXPosition
-            // returns. Re-read first, and repeat the expensive resize only when the
-            // requested size was actually lost during that move.
-            try checkCancellation(for: generation)
-            let frameAfterMove = try copyFrame(window)
-            currentOrigin = frameAfterMove.origin
-            acceptedSize = frameAfterMove.size
-
-            if !WindowMutationStrategy.sizesAreEquivalent(
-                acceptedSize,
-                targetFrame.size
-            ) {
-                try checkCancellation(for: generation)
-                try setSize(window, attribute: kAXSizeAttribute, value: targetFrame.size)
-                let frameAfterRetry = try copyFrame(window)
-                currentOrigin = frameAfterRetry.origin
-                acceptedSize = frameAfterRetry.size
-            }
-
-            let correctedFrame = WindowFrameAnimation.frame(
-                accepting: acceptedSize,
-                for: targetFrame,
-                positionMode: positionMode
-            )
-            if !pointsAreEquivalent(currentOrigin, correctedFrame.origin) {
-                try checkCancellation(for: generation)
-                try setPoint(
-                    window,
-                    attribute: kAXPositionAttribute,
-                    value: correctedFrame.origin
-                )
-                currentOrigin = correctedFrame.origin
-            }
-        }
-
-        return CGRect(
-            origin: changesPosition ? currentOrigin : originalFrame.origin,
-            size: acceptedSize
-        )
     }
 
     private func animate(
@@ -672,7 +554,6 @@ actor AccessibilityWindowController {
 
 private struct WindowActionContext: Sendable {
     let processIdentifier: pid_t
-    let bundleIdentifier: String?
     let screens: [ScreenDescriptor]
     let shouldAnimate: Bool
 }

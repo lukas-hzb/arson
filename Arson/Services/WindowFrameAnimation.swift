@@ -1,31 +1,10 @@
 import CoreGraphics
 import Foundation
 
-enum WindowFrameAnimationMode: Equatable, Sendable {
-    case displaySynced
-    case immediate
-}
-
 struct WindowFrameAnimation: Sendable {
     static let duration: TimeInterval = 0.30
     static let resizeUpdateInterval: TimeInterval = 1.0 / 30.0
     static let resizeRecoveryInterval: TimeInterval = 1.0 / 60.0
-
-    private static let immediateResizeBundleIdentifiers: Set<String> = [
-        "com.apple.MobileSMS"
-    ]
-
-    static func mode(
-        for bundleIdentifier: String?,
-        changesSize: Bool
-    ) -> WindowFrameAnimationMode {
-        guard changesSize,
-              let bundleIdentifier,
-              immediateResizeBundleIdentifiers.contains(bundleIdentifier) else {
-            return .displaySynced
-        }
-        return .immediate
-    }
 
     static func easeOut(_ progress: CGFloat) -> CGFloat {
         let clamped = min(max(progress, 0), 1)

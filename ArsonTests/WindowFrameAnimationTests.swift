@@ -134,25 +134,4 @@ struct WindowFrameAnimationTests {
         )
     }
 
-    @Test func messagesResizesImmediatelyButMessagesMovesStayAnimated() {
-        #expect(
-            WindowFrameAnimation.mode(
-                for: "com.apple.MobileSMS",
-                changesSize: true
-            ) == .immediate
-        )
-        #expect(
-            WindowFrameAnimation.mode(
-                for: "com.apple.MobileSMS",
-                changesSize: false
-            ) == .displaySynced
-        )
-        #expect(
-            WindowFrameAnimation.mode(
-                for: "com.apple.Safari",
-                changesSize: true
-            ) == .displaySynced
-        )
-    }
-
 }
