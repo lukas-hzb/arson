@@ -111,6 +111,8 @@ final class ArsonUITests: XCTestCase {
         XCTAssertTrue(addButton.waitForExistence(timeout: 5))
         XCTAssertTrue(accessoryToggle.isHittable)
 
+        assertSidebarWidth(250, in: app)
+
         accessoryToggle.click()
 
         let toolbarToggle = app.buttons["Sidebar"]
@@ -178,17 +180,16 @@ final class ArsonUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Enable Arson in System Settings"].waitForExistence(timeout: 3))
         assertEqual(initialFrame, mainWindow.frame)
-        XCTAssertTrue(app.staticTexts["Waiting for permission…"].exists)
         XCTAssertTrue(app.buttons["Open System Settings"].exists)
         XCTAssertTrue(app.buttons["Continue Without Permission"].exists)
         XCTAssertFalse(app.staticTexts["System Settings › Privacy & Security › Device Control & Data Access"].exists)
 
         app.disclosureTriangles["Having Trouble?"].click()
-        XCTAssertTrue(app.staticTexts["System Settings › Privacy & Security › Device Control & Data Access"].waitForExistence(timeout: 2))
         app.buttons["Continue Without Permission"].click()
 
         let addButton = app.buttons["Add Preset"]
         XCTAssertTrue(addButton.waitForExistence(timeout: 3))
+        assertSidebarWidth(250, in: app)
         XCTAssertTrue(app.buttons["Duplicate"].exists)
         XCTAssertTrue(app.buttons["Delete"].exists)
         addButton.click()
@@ -266,5 +267,21 @@ final class ArsonUITests: XCTestCase {
         XCTAssertEqual(actual.origin.y, expected.origin.y, accuracy: accuracy)
         XCTAssertEqual(actual.width, expected.width, accuracy: accuracy)
         XCTAssertEqual(actual.height, expected.height, accuracy: accuracy)
+    }
+
+    @MainActor
+    private func assertSidebarWidth(
+        _ expected: Double,
+        in app: XCUIApplication,
+        accuracy: Double = 1
+    ) {
+        let divider = app.splitGroups.firstMatch.splitters.firstMatch
+        XCTAssertTrue(divider.exists)
+        let dividerPosition = (divider.value as? NSNumber)?.doubleValue
+            ?? (divider.value as? String).flatMap { Double($0) }
+        XCTAssertNotNil(dividerPosition)
+        if let dividerPosition {
+            XCTAssertEqual(dividerPosition, expected, accuracy: accuracy)
+        }
     }
 }

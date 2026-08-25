@@ -7,6 +7,7 @@ final class MainWindowController: NSWindowController {
     nonisolated static let currentOnboardingVersion = 2
     nonisolated static let onboardingPreferenceKey = "completedOnboardingVersion"
     nonisolated private static let defaultContentSize = NSSize(width: 920, height: 620)
+    nonisolated private static let defaultSidebarThickness: CGFloat = 250
     nonisolated private static let minimumContentSize = NSSize(width: 720, height: 480)
     nonisolated private static let toolbarIdentifier = NSToolbar.Identifier("ArsonMainToolbar")
     nonisolated private static let addPresetIdentifier = NSToolbarItem.Identifier(
@@ -54,6 +55,8 @@ final class MainWindowController: NSWindowController {
             selection: selection
         )
         self.sidebarViewController = sidebarViewController
+        // AppKit reads this initial width without constraining later divider movement.
+        sidebarViewController.view.frame.size.width = Self.defaultSidebarThickness
 
         let detailViewController = NSHostingController(
             rootView: MainView(selection: selection)
@@ -69,7 +72,8 @@ final class MainWindowController: NSWindowController {
         )
         sidebarItem.minimumThickness = 190
         sidebarItem.maximumThickness = 320
-        sidebarItem.preferredThicknessFraction = 250.0 / 920.0
+        sidebarItem.preferredThicknessFraction = Self.defaultSidebarThickness
+            / Self.defaultContentSize.width
         sidebarItem.canCollapse = true
         sidebarItem.canCollapseFromWindowResize = true
         sidebarItem.allowsFullHeightLayout = true
