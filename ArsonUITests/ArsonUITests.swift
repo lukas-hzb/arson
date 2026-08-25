@@ -21,12 +21,14 @@ final class ArsonUITests: XCTestCase {
         let iconPicker = app.popUpButtons["menuBarIconPicker"]
         XCTAssertTrue(iconPicker.waitForExistence(timeout: 5))
         XCTAssertEqual(iconPicker.value as? String, "Windows")
+        let initialWidth = iconPicker.frame.width
 
         iconPicker.click()
         let flameItem = app.menuItems["Flame"]
         XCTAssertTrue(flameItem.waitForExistence(timeout: 2))
         flameItem.click()
         XCTAssertEqual(iconPicker.value as? String, "Flame")
+        XCTAssertEqual(iconPicker.frame.width, initialWidth, accuracy: 0.5)
     }
 
     @MainActor

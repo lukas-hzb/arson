@@ -104,11 +104,12 @@ private struct MenuBarIconPopUpButton: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSPopUpButton {
         let button = NSPopUpButton(frame: .zero, pullsDown: false)
-        button.cell = MenuBarIconPopUpButtonCell(textCell: "", pullsDown: false)
         button.controlSize = .regular
         button.imagePosition = .imageLeading
+        button.imageHugsTitle = true
         button.imageScaling = .scaleProportionallyDown
         button.autoenablesItems = false
+        button.usesItemFromMenu = false
         button.target = context.coordinator
         button.action = #selector(Coordinator.selectionChanged(_:))
         button.setAccessibilityIdentifier("menuBarIconPicker")
@@ -126,9 +127,21 @@ private struct MenuBarIconPopUpButton: NSViewRepresentable {
         nsView: NSPopUpButton,
         context: Context
     ) -> CGSize? {
-        var size = nsView.intrinsicContentSize
-        size.width += MenuBarIconPopUpButtonCell.additionalIconTitleSpacing
-        return size
+        guard let cell = nsView.cell as? NSPopUpButtonCell else {
+            return nsView.intrinsicContentSize
+        }
+
+        let displayedItem = cell.menuItem
+        defer { cell.menuItem = displayedItem }
+
+        return MenuBarIconStyle.allCases.reduce(.zero) { size, style in
+            cell.menuItem = style.closedButtonSizingMenuItem
+            let itemSize = cell.cellSize
+            return CGSize(
+                width: max(size.width, itemSize.width),
+                height: max(size.height, itemSize.height)
+            )
+        }
     }
 
     private func update(_ button: NSPopUpButton) {
@@ -155,7 +168,12 @@ private struct MenuBarIconPopUpButton: NSViewRepresentable {
         if button.selectedTag() != selectedTag {
             button.selectItem(withTag: selectedTag)
         }
-        button.synchronizeTitleAndSelectedItem()
+
+        guard let cell = button.cell as? NSPopUpButtonCell else { return }
+        cell.usesItemFromMenu = false
+        cell.menuItem = selection.closedButtonMenuItem
+        button.invalidateIntrinsicContentSize()
+        button.needsDisplay = true
     }
 
     @MainActor
@@ -170,19 +188,6 @@ private struct MenuBarIconPopUpButton: NSViewRepresentable {
             guard let style = MenuBarIconStyle(tag: sender.selectedTag()) else { return }
             selection.wrappedValue = style
         }
-    }
-}
-
-private final class MenuBarIconPopUpButtonCell: NSPopUpButtonCell {
-    static let additionalIconTitleSpacing: CGFloat = 6
-
-    override func titleRect(forBounds rect: NSRect) -> NSRect {
-        var titleRect = super.titleRect(forBounds: rect)
-        guard image != nil else { return titleRect }
-
-        titleRect.origin.x += Self.additionalIconTitleSpacing
-        titleRect.size.width = max(0, titleRect.width - Self.additionalIconTitleSpacing)
-        return titleRect
     }
 }
 
@@ -212,6 +217,30 @@ private extension MenuBarIconStyle {
     }
 
     var menuImage: NSImage? {
+        makeImage(artworkSlotWidth: nil, trailingSpacing: 0)
+    }
+
+    var closedButtonMenuItem: NSMenuItem {
+        closedButtonMenuItem(trailingSpacing: Metrics.closedIconTitleSpacing)
+    }
+
+    var closedButtonSizingMenuItem: NSMenuItem {
+        closedButtonMenuItem(trailingSpacing: 0)
+    }
+
+    private func closedButtonMenuItem(trailingSpacing: CGFloat) -> NSMenuItem {
+        let item = NSMenuItem(title: localizedTitle, action: nil, keyEquivalent: "")
+        item.image = makeImage(
+            artworkSlotWidth: Metrics.closedArtworkSlotWidth,
+            trailingSpacing: trailingSpacing
+        )
+        return item
+    }
+
+    private func makeImage(
+        artworkSlotWidth: CGFloat?,
+        trailingSpacing: CGFloat
+    ) -> NSImage? {
         let sourceImage: NSImage?
         let artworkSize: NSSize
         switch self {
@@ -229,12 +258,13 @@ private extension MenuBarIconStyle {
         sourceImage.size = artworkSize
         sourceImage.isTemplate = true
 
+        let resolvedArtworkSlotWidth = artworkSlotWidth ?? artworkSize.width
         let imageSize = NSSize(
-            width: artworkSize.width,
+            width: resolvedArtworkSlotWidth + trailingSpacing,
             height: Metrics.imageHeight
         )
         let artworkOrigin = NSPoint(
-            x: 0,
+            x: (resolvedArtworkSlotWidth - artworkSize.width) / 2,
             y: (imageSize.height - artworkSize.height) / 2
         )
         let image = NSImage(size: imageSize, flipped: false) { _ in
@@ -252,6 +282,10 @@ private extension MenuBarIconStyle {
     }
 
     private enum Metrics {
+        // The configured window symbol is 21 pt wide on macOS 26/27. A 22 pt
+        // slot preserves it at its natural size and centers the narrower flame.
+        static let closedArtworkSlotWidth: CGFloat = 22
+        static let closedIconTitleSpacing: CGFloat = 6
         static let flameArtworkSize = NSSize(width: 16, height: 16)
         static let imageHeight: CGFloat = 16
     }
