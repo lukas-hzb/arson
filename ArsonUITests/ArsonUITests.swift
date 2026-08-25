@@ -1,3 +1,4 @@
+import AppKit
 import XCTest
 
 final class ArsonUITests: XCTestCase {
@@ -122,6 +123,87 @@ final class ArsonUITests: XCTestCase {
 
         XCTAssertTrue(addButton.waitForExistence(timeout: 3))
         XCTAssertTrue(addButton.isHittable)
+    }
+
+    @MainActor
+    func testClosingMainWindowHandsFocusToCurrentDesktopAndReopens() throws {
+        continueAfterFailure = false
+
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-completedOnboardingVersion", "2",
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US"
+        ]
+        app.launchEnvironment["ARSON_TEST_STORAGE_DIRECTORY"] = NSTemporaryDirectory()
+            + "ArsonUITests-\(UUID().uuidString)"
+        app.launch()
+
+        let mainWindow = app.windows["ArsonMainWindow"]
+        XCTAssertTrue(mainWindow.waitForExistence(timeout: 5))
+        let runningApplication = try XCTUnwrap(
+            NSRunningApplication.runningApplications(
+                withBundleIdentifier: "de.lukasharzbecker.arson"
+            ).max { first, second in
+                (first.launchDate ?? .distantPast) < (second.launchDate ?? .distantPast)
+            }
+        )
+        let bundleURL = try XCTUnwrap(runningApplication.bundleURL)
+        let processIdentifier = runningApplication.processIdentifier
+
+        let closeButton = mainWindow.buttons[XCUIIdentifierCloseWindow]
+        XCTAssertTrue(closeButton.isHittable)
+        closeButton.click()
+
+        XCTAssertTrue(mainWindow.waitForNonExistence(timeout: 3))
+        let finderIsFrontmost = XCTNSPredicateExpectation(
+            predicate: NSPredicate { _, _ in
+                NSWorkspace.shared.frontmostApplication?.bundleIdentifier
+                    == "com.apple.finder"
+            },
+            object: nil
+        )
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [finderIsFrontmost], timeout: 3),
+            .completed
+        )
+        XCTAssertEqual(app.state, .runningBackground)
+
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        configuration.createsNewApplicationInstance = false
+        configuration.allowsRunningApplicationSubstitution = false
+        configuration.appleEvent = NSAppleEventDescriptor(
+            eventClass: AEEventClass(kCoreEventClass),
+            eventID: AEEventID(kAEReopenApplication),
+            targetDescriptor: NSAppleEventDescriptor(
+                processIdentifier: processIdentifier
+            ),
+            returnID: AEReturnID(kAutoGenerateReturnID),
+            transactionID: AETransactionID(kAnyTransactionID)
+        )
+        let reopenExpectation = expectation(
+            description: "Launch Services reopens the existing Arson process"
+        )
+        NSWorkspace.shared.openApplication(
+            at: bundleURL,
+            configuration: configuration,
+            completionHandler: { reopenedApplication, error in
+                XCTAssertNil(error)
+                XCTAssertEqual(
+                    reopenedApplication?.processIdentifier,
+                    processIdentifier
+                )
+                reopenExpectation.fulfill()
+            }
+        )
+        wait(for: [reopenExpectation], timeout: 5)
+        XCTAssertTrue(mainWindow.waitForExistence(timeout: 5))
+        XCTAssertFalse(
+            try XCTUnwrap(
+                NSRunningApplication(processIdentifier: processIdentifier)
+            ).isTerminated
+        )
     }
 
     @MainActor

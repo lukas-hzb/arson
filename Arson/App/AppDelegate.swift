@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = AppModel()
     private var mainWindowController: MainWindowController?
     private var menuBarController: MenuBarController?
+    private var isWaitingToBecomeAccessory = false
 
     override init() {
         let arguments = ProcessInfo.processInfo.arguments
@@ -28,22 +29,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
         menuBarController = MenuBarController(model: model)
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(windowWillClose(_:)),
-            name: NSWindow.willCloseNotification,
-            object: nil
-        )
         showMainWindow()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        false
+        beginAccessoryTransition(for: sender)
+        return false
+    }
+
+    func applicationDidResignActive(_ notification: Notification) {
+        guard isWaitingToBecomeAccessory else { return }
+        isWaitingToBecomeAccessory = false
+
+        guard !hasVisibleNormalWindow else { return }
+        NSApp.setActivationPolicy(.accessory)
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showMainWindow()
-        return true
+        return false
     }
 
     func applicationDidUpdate(_ notification: Notification) {
@@ -58,8 +62,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func showMainWindow() {
+        isWaitingToBecomeAccessory = false
         NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         if mainWindowController == nil {
             mainWindowController = MainWindowController(model: model)
         }
@@ -75,8 +80,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func showIntroduction() {
+        isWaitingToBecomeAccessory = false
         NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         if mainWindowController == nil {
             mainWindowController = MainWindowController(model: model)
         }
@@ -87,18 +93,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func markWindowVisible() {
+        isWaitingToBecomeAccessory = false
         NSApp.setActivationPolicy(.regular)
     }
 
-    @objc private func windowWillClose(_ notification: Notification) {
-        Task { @MainActor in
-            await Task.yield()
-            let hasVisibleWindow = NSApp.windows.contains { window in
-                window.isVisible && window.level == .normal && !window.isMiniaturized
-            }
-            if !hasVisibleWindow {
-                NSApp.setActivationPolicy(.accessory)
-            }
+    private var hasVisibleNormalWindow: Bool {
+        NSApp.windows.contains { window in
+            window.isVisible && window.level == .normal && !window.isMiniaturized
         }
+    }
+
+    private func beginAccessoryTransition(for application: NSApplication) {
+        isWaitingToBecomeAccessory = true
+
+        guard application.isActive else {
+            isWaitingToBecomeAccessory = false
+            application.setActivationPolicy(.accessory)
+            return
+        }
+
+        guard let finder = NSRunningApplication.runningApplications(
+            withBundleIdentifier: "com.apple.finder"
+        ).first else {
+            return
+        }
+
+        application.yieldActivation(to: finder)
+        _ = finder.activate(from: .current, options: [])
     }
 }
