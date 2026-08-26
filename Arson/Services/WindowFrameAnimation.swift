@@ -31,12 +31,17 @@ struct WindowFrameAnimation: Sendable {
     ) -> CGRect {
         let origin: CGPoint
         switch positionMode {
-        case .keep:
+        case .keep, .leftEdge:
             origin = requestedFrame.origin
         case .center:
             origin = CGPoint(
                 x: requestedFrame.midX - acceptedSize.width / 2,
                 y: requestedFrame.midY - acceptedSize.height / 2
+            )
+        case .rightEdge:
+            origin = CGPoint(
+                x: requestedFrame.maxX - acceptedSize.width,
+                y: requestedFrame.minY
             )
         }
         return CGRect(origin: origin, size: acceptedSize)

@@ -24,12 +24,21 @@ struct WindowMutationStrategy: Sendable {
         )
         let changesOrigin = abs(originalFrame.minX - requestedFrame.minX) > tolerance
             || abs(originalFrame.minY - requestedFrame.minY) > tolerance
+        let needsConstraintCorrection: Bool
+        switch positionMode {
+        case .center:
+            needsConstraintCorrection = changesSize
+        case .rightEdge:
+            needsConstraintCorrection = abs(originalFrame.width - requestedFrame.width) > tolerance
+        case .keep, .leftEdge:
+            needsConstraintCorrection = false
+        }
 
         return WindowMutationPlan(
             changesSize: changesSize,
-            // A centered resize may need an origin correction when the target app
-            // accepts a constrained size even if the requested origin is unchanged.
-            changesPosition: changesOrigin || (changesSize && positionMode == .center)
+            // Centered and right-aligned resizes may need an origin correction when
+            // the target app accepts a constrained size.
+            changesPosition: changesOrigin || needsConstraintCorrection
         )
     }
 

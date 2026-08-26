@@ -32,6 +32,38 @@ struct HotKeyAndCoordinateTests {
         #expect(GlobalHotKeyManager.validate(shortcut) == nil)
     }
 
+    @Test func unmodifiedDeleteClearsTheRecordedShortcut() {
+        #expect(
+            ShortcutRecorderInput.clearsShortcut(
+                keyCode: UInt16(kVK_Delete),
+                modifiers: []
+            )
+        )
+        #expect(
+            ShortcutRecorderInput.clearsShortcut(
+                keyCode: UInt16(kVK_ForwardDelete),
+                modifiers: []
+            )
+        )
+    }
+
+    @Test func modifiedDeleteCanBeRecordedAsAShortcut() {
+        let modifiers: HotKeyModifiers = [.command, .control]
+        let shortcut = HotKeyShortcut(
+            keyCode: UInt32(kVK_Delete),
+            modifiers: modifiers,
+            keyLabel: "⌫"
+        )
+
+        #expect(
+            !ShortcutRecorderInput.clearsShortcut(
+                keyCode: UInt16(kVK_Delete),
+                modifiers: modifiers
+            )
+        )
+        #expect(GlobalHotKeyManager.validate(shortcut) == nil)
+    }
+
     @Test func convertsDisplayAbovePrimaryScreen() {
         let appKitFrame = CGRect(x: 0, y: 900, width: 1_440, height: 900)
         let converted = ScreenCoordinateConverter.convert(appKitFrame, primaryHeight: 900)

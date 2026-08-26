@@ -72,6 +72,53 @@ struct WindowGeometryEngineTests {
         #expect(result.size == original.size)
     }
 
+    @Test func fullHeightMovesAKeptWindowToTheVisibleTopEdge() throws {
+        let preset = Preset(name: "Full height", height: .percent(100))
+
+        let result = try engine.targetFrame(
+            for: preset,
+            originalFrame: original,
+            visibleFrame: visible
+        )
+
+        #expect(result.size == CGSize(width: original.width, height: visible.height))
+        #expect(result.origin == CGPoint(x: original.minX, y: visible.minY))
+        #expect(result.maxY == visible.maxY)
+    }
+
+    @Test func keptPositionMovesOnlyAsFarAsNeededToFitTheNewSize() throws {
+        let preset = Preset(
+            name: "Fit",
+            width: .points(1_400),
+            height: .points(800)
+        )
+
+        let result = try engine.targetFrame(
+            for: preset,
+            originalFrame: original,
+            visibleFrame: visible
+        )
+
+        #expect(result.origin == CGPoint(x: 40, y: 100))
+    }
+
+    @Test func offsetIsAppliedAfterFittingTheBasePosition() throws {
+        let preset = Preset(
+            name: "Full height with offset",
+            height: .percent(100),
+            offsetY: 60
+        )
+
+        let result = try engine.targetFrame(
+            for: preset,
+            originalFrame: original,
+            visibleFrame: visible
+        )
+
+        #expect(result.minY == visible.minY + 60)
+        #expect(result.maxY == visible.maxY + 60)
+    }
+
     @Test func centeredOffsetIsAppliedLast() throws {
         let preset = Preset(
             name: "Centered offset",
@@ -85,6 +132,71 @@ struct WindowGeometryEngineTests {
         let result = try engine.targetFrame(for: preset, originalFrame: original, visibleFrame: visible)
 
         #expect(result.origin == CGPoint(x: 580, y: 372))
+    }
+
+    @Test func edgePositionsAlignHorizontallyAndKeepTheVerticalPosition() throws {
+        let left = Preset(name: "Left", position: .leftEdge)
+        let right = Preset(name: "Right", width: .points(400), position: .rightEdge)
+
+        let leftResult = try engine.targetFrame(
+            for: left,
+            originalFrame: original,
+            visibleFrame: visible
+        )
+        let rightResult = try engine.targetFrame(
+            for: right,
+            originalFrame: original,
+            visibleFrame: visible
+        )
+
+        #expect(leftResult.origin == CGPoint(x: visible.minX, y: original.minY))
+        #expect(rightResult.origin == CGPoint(x: visible.maxX - 400, y: original.minY))
+    }
+
+    @Test func edgePositionsAlsoFitAFullHeightWindowVertically() throws {
+        let left = Preset(
+            name: "Full-height left",
+            height: .percent(100),
+            position: .leftEdge
+        )
+        let right = Preset(
+            name: "Full-height right",
+            height: .percent(100),
+            position: .rightEdge
+        )
+
+        let leftResult = try engine.targetFrame(
+            for: left,
+            originalFrame: original,
+            visibleFrame: visible
+        )
+        let rightResult = try engine.targetFrame(
+            for: right,
+            originalFrame: original,
+            visibleFrame: visible
+        )
+
+        #expect(leftResult.minY == visible.minY)
+        #expect(leftResult.maxY == visible.maxY)
+        #expect(rightResult.minY == visible.minY)
+        #expect(rightResult.maxY == visible.maxY)
+    }
+
+    @Test func edgeOffsetsAreAppliedAfterAlignment() throws {
+        let preset = Preset(
+            name: "Right inset",
+            position: .rightEdge,
+            offsetX: -20,
+            offsetY: 30
+        )
+
+        let result = try engine.targetFrame(
+            for: preset,
+            originalFrame: original,
+            visibleFrame: visible
+        )
+
+        #expect(result.origin == CGPoint(x: visible.maxX - original.width - 20, y: 150))
     }
 
     @Test func rejectsInvalidPercent() {
@@ -155,6 +267,32 @@ struct WindowGeometryEngineTests {
                 from: original,
                 to: sameOriginWithNewSize,
                 positionMode: .keep
+            ) == WindowMutationPlan(changesSize: true, changesPosition: false)
+        )
+    }
+
+    @Test func rightAlignedWidthResizeKeepsPositionAvailableForConstraintCorrection() {
+        let sameOriginWithNewWidth = CGRect(
+            origin: original.origin,
+            size: CGSize(width: original.width + 100, height: original.height)
+        )
+        let sameOriginWithNewHeight = CGRect(
+            origin: original.origin,
+            size: CGSize(width: original.width, height: original.height + 100)
+        )
+
+        #expect(
+            WindowMutationStrategy.plan(
+                from: original,
+                to: sameOriginWithNewWidth,
+                positionMode: .rightEdge
+            ) == WindowMutationPlan(changesSize: true, changesPosition: true)
+        )
+        #expect(
+            WindowMutationStrategy.plan(
+                from: original,
+                to: sameOriginWithNewHeight,
+                positionMode: .rightEdge
             ) == WindowMutationPlan(changesSize: true, changesPosition: false)
         )
     }

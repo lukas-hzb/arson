@@ -57,6 +57,8 @@ struct PresetEditorView: View {
                 Picker("editor.basePosition", selection: $preset.position) {
                     Text("position.keep").tag(PositionMode.keep)
                     Text("position.center").tag(PositionMode.center)
+                    Text("position.leftEdge").tag(PositionMode.leftEdge)
+                    Text("position.rightEdge").tag(PositionMode.rightEdge)
                 }
                 .pickerStyle(.segmented)
                 .foregroundStyle(.primary)

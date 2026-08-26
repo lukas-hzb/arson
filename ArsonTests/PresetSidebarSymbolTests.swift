@@ -5,7 +5,12 @@ struct PresetSidebarSymbolTests {
     @Test func seedPresetsUseDistinctSemanticSymbols() {
         let symbols = Preset.seedPresets().map(PresetSidebarSymbol.name(for:))
 
-        #expect(symbols == ["square.resize", "aspectratio", "arrow.down.right"])
+        #expect(symbols == [
+            "aspectratio",
+            "rectangle.lefthalf.filled",
+            "rectangle.righthalf.filled",
+            "arrow.down.right"
+        ])
     }
 
     @Test func singleDimensionChangesShowTheirAxis() {
@@ -33,6 +38,24 @@ struct PresetSidebarSymbolTests {
         let preset = Preset(name: "Center", position: .center)
 
         #expect(PresetSidebarSymbol.name(for: preset) == "scope")
+    }
+
+    @Test func edgePositionsUseTheirAlignedSide() {
+        let left = Preset(
+            name: "Left",
+            width: .percent(50),
+            height: .percent(100),
+            position: .leftEdge
+        )
+        let right = Preset(
+            name: "Right",
+            width: .percent(50),
+            height: .percent(100),
+            position: .rightEdge
+        )
+
+        #expect(PresetSidebarSymbol.name(for: left) == "rectangle.lefthalf.filled")
+        #expect(PresetSidebarSymbol.name(for: right) == "rectangle.righthalf.filled")
     }
 
     @Test func offsetsUseTheirVisualDirection() {

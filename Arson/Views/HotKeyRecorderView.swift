@@ -48,13 +48,17 @@ struct HotKeyRecorderView: NSViewRepresentable {
                 stopRecording()
                 return
             }
-            if event.keyCode == UInt16(kVK_Delete) || event.keyCode == UInt16(kVK_ForwardDelete) {
+
+            let modifiers = HotKeyModifiers(event.modifierFlags)
+            if ShortcutRecorderInput.clearsShortcut(
+                keyCode: event.keyCode,
+                modifiers: modifiers
+            ) {
                 shortcut.wrappedValue = nil
                 stopRecording()
                 return
             }
 
-            let modifiers = HotKeyModifiers(event.modifierFlags)
             let label = Self.label(for: event)
             guard !label.isEmpty else {
                 NSSound.beep()
@@ -96,6 +100,13 @@ struct HotKeyRecorderView: NSViewRepresentable {
             if let special = special[event.keyCode] { return special }
             return event.charactersIgnoringModifiers?.uppercased() ?? ""
         }
+    }
+}
+
+enum ShortcutRecorderInput {
+    static func clearsShortcut(keyCode: UInt16, modifiers: HotKeyModifiers) -> Bool {
+        modifiers.isEmpty
+            && (keyCode == UInt16(kVK_Delete) || keyCode == UInt16(kVK_ForwardDelete))
     }
 }
 

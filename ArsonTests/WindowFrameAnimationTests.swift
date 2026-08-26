@@ -50,6 +50,19 @@ struct WindowFrameAnimationTests {
         #expect(accepted.origin == requested.origin)
     }
 
+    @Test func constrainedRightAlignedWindowKeepsTheRequestedRightEdge() {
+        let requested = CGRect(x: 640, y: 180, width: 800, height: 600)
+        let accepted = WindowFrameAnimation.frame(
+            accepting: CGSize(width: 600, height: 500),
+            for: requested,
+            positionMode: .rightEdge
+        )
+
+        #expect(accepted.size == CGSize(width: 600, height: 500))
+        #expect(accepted.maxX == requested.maxX)
+        #expect(accepted.minY == requested.minY)
+    }
+
     @Test func growthPositionsBeforeResizeButShrinkDoesNot() {
         let current = CGSize(width: 600, height: 500)
 

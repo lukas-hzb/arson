@@ -168,11 +168,14 @@ actor AccessibilityWindowController {
                         let position = try geometry.targetOrigin(
                             for: preset,
                             originalOrigin: originalPosition,
-                            actualSize: acceptedSize,
+                            // Use the requested size to make room before retrying the
+                            // resize. Some apps otherwise constrain the window against
+                            // its old origin, notably for 100% width or height presets.
+                            actualSize: requestedFrame.size,
                             visibleFrame: screen.visibleFrame
                         )
                         try setPoint(window, attribute: kAXPositionAttribute, value: position)
-                        positionedForSize = acceptedSize
+                        positionedForSize = requestedFrame.size
                         didChangeFrame = true
                     }
                 }

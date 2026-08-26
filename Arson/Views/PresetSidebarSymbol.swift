@@ -2,6 +2,15 @@ import Foundation
 
 enum PresetSidebarSymbol {
     static func name(for preset: Preset) -> String {
+        switch preset.position {
+        case .leftEdge:
+            return "rectangle.lefthalf.filled"
+        case .rightEdge:
+            return "rectangle.righthalf.filled"
+        case .keep, .center:
+            break
+        }
+
         let changesWidth = preset.width.mode != .unchanged
         let changesHeight = preset.height.mode != .unchanged
 
@@ -32,7 +41,12 @@ enum PresetSidebarSymbol {
         let verticalDirection = direction(of: preset.offsetY)
 
         if horizontalDirection == 0 && verticalDirection == 0 {
-            return preset.position == .center ? "scope" : "rectangle.on.rectangle"
+            switch preset.position {
+            case .keep: return "rectangle.on.rectangle"
+            case .center: return "scope"
+            case .leftEdge: return "rectangle.lefthalf.filled"
+            case .rightEdge: return "rectangle.righthalf.filled"
+            }
         }
 
         switch (horizontalDirection, verticalDirection) {

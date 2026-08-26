@@ -12,6 +12,7 @@ readonly LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/
 readonly ARSON_XCODE_APP="${ARSON_XCODE_APP:-/Applications/Xcode.app}"
 readonly ARSON_DERIVED_DATA="${REPOSITORY_ROOT}/DerivedData/LocalInstall"
 readonly BUILT_APP="${ARSON_DERIVED_DATA}/Build/Products/Release/Arson.app"
+readonly USER_XCODE_DERIVED_DATA="${HOME}/Library/Developer/Xcode/DerivedData"
 
 reset_onboarding=false
 show_onboarding_only=false
@@ -138,25 +139,45 @@ unregister_build_copies() {
     done < <(/usr/bin/mdfind "kMDItemCFBundleIdentifier == '${UI_TEST_RUNNER_BUNDLE_IDENTIFIER}'" 2>/dev/null || true)
 }
 
-remove_repository_build_copies() {
+remove_generated_build_copies() {
     local candidate
-    local derived_data_root="${REPOSITORY_ROOT}/DerivedData"
+    local bundle_identifier
+    local derived_data_root
 
-    if [[ ! -d "$derived_data_root" ]]; then
-        return
-    fi
+    for derived_data_root in "${REPOSITORY_ROOT}/DerivedData" "$USER_XCODE_DERIVED_DATA"; do
+        [[ -d "$derived_data_root" ]] || continue
 
-    while IFS= read -r candidate; do
-        case "$candidate" in
-            "${derived_data_root}"/*/Arson.app|"${derived_data_root}"/*/ArsonUITests-Runner.app)
-                /bin/rm -rf -- "$candidate"
-                ;;
-            *)
-                print -u2 -- "Refusing to remove unexpected build path: ${candidate}"
-                exit 1
-                ;;
-        esac
-    done < <(/usr/bin/find "$derived_data_root" -type d \( -name Arson.app -o -name ArsonUITests-Runner.app \) -prune -print)
+        while IFS= read -r candidate; do
+            case "$candidate" in
+                "${derived_data_root}"/*/Build/Products/*/Arson.app|\
+                "${derived_data_root}"/*/Build/Products/*/ArsonUITests-Runner.app)
+                    ;;
+                *)
+                    print -u2 -- "Refusing to remove unexpected build path: ${candidate}"
+                    exit 1
+                    ;;
+            esac
+
+            bundle_identifier="$(
+                /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" \
+                    "${candidate}/Contents/Info.plist" 2>/dev/null || true
+            )"
+            case "$bundle_identifier" in
+                "$BUNDLE_IDENTIFIER"|"$UI_TEST_RUNNER_BUNDLE_IDENTIFIER")
+                    unregister_app "$candidate"
+                    /bin/rm -rf -- "$candidate"
+                    ;;
+                *)
+                    print -u2 -- "Refusing to remove app with unexpected identifier at ${candidate}"
+                    exit 1
+                    ;;
+            esac
+        done < <(
+            /usr/bin/find "$derived_data_root" -type d \
+                \( -name Arson.app -o -name ArsonUITests-Runner.app \) \
+                -prune -print
+        )
+    done
 }
 
 run_for_applications_directory() {
@@ -240,7 +261,7 @@ if ! $show_onboarding_only; then
 fi
 
 unregister_build_copies
-remove_repository_build_copies
+remove_generated_build_copies
 "$LSREGISTER" -gc >/dev/null 2>&1 || true
 "$LSREGISTER" -f "$INSTALL_APP" >/dev/null
 

@@ -41,11 +41,33 @@ struct WindowGeometryEngine: Sendable {
         let base: CGPoint
         switch preset.position {
         case .keep:
-            base = originalOrigin
+            base = fittedOrigin(
+                originalOrigin,
+                size: actualSize,
+                visibleFrame: visibleFrame
+            )
         case .center:
             base = CGPoint(
                 x: visibleFrame.midX - actualSize.width / 2,
                 y: visibleFrame.midY - actualSize.height / 2
+            )
+        case .leftEdge:
+            base = CGPoint(
+                x: visibleFrame.minX,
+                y: fittedCoordinate(
+                    originalOrigin.y,
+                    minimum: visibleFrame.minY,
+                    maximum: visibleFrame.maxY - actualSize.height
+                )
+            )
+        case .rightEdge:
+            base = CGPoint(
+                x: visibleFrame.maxX - actualSize.width,
+                y: fittedCoordinate(
+                    originalOrigin.y,
+                    minimum: visibleFrame.minY,
+                    maximum: visibleFrame.maxY - actualSize.height
+                )
             )
         }
 
@@ -88,5 +110,31 @@ struct WindowGeometryEngine: Sendable {
             return available * CGFloat(rule.value / 100)
         }
     }
-}
 
+    private func fittedOrigin(
+        _ origin: CGPoint,
+        size: CGSize,
+        visibleFrame: CGRect
+    ) -> CGPoint {
+        CGPoint(
+            x: fittedCoordinate(
+                origin.x,
+                minimum: visibleFrame.minX,
+                maximum: visibleFrame.maxX - size.width
+            ),
+            y: fittedCoordinate(
+                origin.y,
+                minimum: visibleFrame.minY,
+                maximum: visibleFrame.maxY - size.height
+            )
+        )
+    }
+
+    private func fittedCoordinate(
+        _ coordinate: CGFloat,
+        minimum: CGFloat,
+        maximum: CGFloat
+    ) -> CGFloat {
+        min(max(coordinate, minimum), max(minimum, maximum))
+    }
+}

@@ -8,13 +8,33 @@ struct PresetStoreTests {
         let url = temporaryFileURL()
         let store = PresetStore(fileURL: url)
 
-        #expect(store.presets.count == 3)
-        #expect(store.presets.allSatisfy { $0.shortcut == nil })
+        #expect(store.presets.count == 4)
         #expect(store.presets.map(\.name) == [
             String(localized: "preset.seed.fixed"),
-            String(localized: "preset.seed.percent"),
+            String(localized: "preset.seed.leftHalf"),
+            String(localized: "preset.seed.rightHalf"),
             String(localized: "preset.seed.offset")
         ])
+        #expect(store.presets.map(\.width) == [
+            .percent(80), .percent(50), .percent(50), .unchanged
+        ])
+        #expect(store.presets.map(\.height) == [
+            .percent(80), .percent(100), .percent(100), .unchanged
+        ])
+        #expect(store.presets.map(\.position) == [
+            .center, .leftEdge, .rightEdge, .keep
+        ])
+        #expect(store.presets.map(\.offsetX) == [0, 1, 0, 20])
+        #expect(store.presets.map(\.offsetY) == [0, 1, 0, 20])
+        #expect(store.presets.compactMap(\.shortcut).map(\.displayValue) == [
+            "⌃⌘↩", "⌃⌘←", "⌃⌘→", "⌃⌘⌫"
+        ])
+        #expect(
+            store.presets.compactMap(\.shortcut).allSatisfy {
+                GlobalHotKeyManager.validate($0) == nil
+            }
+        )
+        #expect(Set(store.presets.compactMap(\.shortcut)).count == 4)
     }
 
     @Test func savesAndLoadsRoundTrip() throws {
@@ -33,6 +53,20 @@ struct PresetStoreTests {
         let storedPresets = try PresetStore.load(from: url)
         let loaded = try #require(storedPresets)
         #expect(loaded == [original])
+    }
+
+    @Test func savesAndLoadsEdgePositions() throws {
+        let originals = [
+            Preset(name: "Left", position: .leftEdge),
+            Preset(name: "Right", position: .rightEdge)
+        ]
+        let url = temporaryFileURL()
+        let store = PresetStore(fileURL: url, seedPresets: originals)
+        store.save()
+
+        let storedPresets = try PresetStore.load(from: url)
+        let loaded = try #require(storedPresets)
+        #expect(loaded == originals)
     }
 
     @Test func duplicateGetsNewIdentityAndNoShortcut() throws {

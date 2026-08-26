@@ -54,9 +54,11 @@ Each preset can change width and height independently:
 - **Points** uses a fixed logical point size, limited to the selected display's visible work area.
 - **Percent** uses a value greater than 0 and up to 100 percent of the visible work area.
 
-The display with the greatest overlap with the focused window is used. The visible work area excludes the menu bar and Dock. Arson first applies the size, reads back the actual size accepted by the target app, then keeps the current origin or centers the window, and finally applies the point offset. Positive X moves right; positive Y moves down. Offsets are intentionally not constrained to screen bounds.
+The display with the greatest overlap with the focused window is used. The visible work area excludes the menu bar and Dock. Arson keeps the current origin where possible, but moves it just far enough to fit a resized window into that work area; alternatively, it centers the window or aligns it with the left or right edge while retaining its vertical position where possible. The point offset is applied last. Positive X moves right; positive Y moves down. Offsets are intentionally not constrained to screen bounds.
 
-Global shortcuts require Command, Control, or Option and one non-modifier key. Shift may be added. Escape cancels recording and Delete removes a shortcut. Conflicting, reserved, or unavailable shortcuts are shown inline.
+Global shortcuts require Command, Control, or Option and one non-modifier key. Shift may be added. Escape cancels recording and unmodified Delete removes a shortcut; modified Delete can be recorded as part of a shortcut. Conflicting, reserved, or unavailable shortcuts are shown inline.
+
+Fresh configurations start with Compact (`⌃⌘↩`), Left Half (`⌃⌘←`), Right Half (`⌃⌘→`), and Down and Right (`⌃⌘⌫`). Existing stored presets are left unchanged.
 
 Closing all Arson windows keeps the app and shortcuts running and removes the Dock icon. The Settings window lets you choose the menu bar symbol or hide it entirely. When hidden, Arson and its global shortcuts keep running in the background; open Arson again from Applications or Launchpad to restore the main window. `⌘Q` quits the app.
 

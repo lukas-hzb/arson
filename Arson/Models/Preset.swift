@@ -1,3 +1,4 @@
+import Carbon
 import Foundation
 
 enum DimensionMode: String, Codable, CaseIterable, Identifiable, Sendable {
@@ -38,6 +39,8 @@ struct DimensionRule: Codable, Equatable, Hashable, Sendable {
 enum PositionMode: String, Codable, CaseIterable, Identifiable, Sendable {
     case keep
     case center
+    case leftEdge
+    case rightEdge
 
     var id: Self { self }
 }
@@ -122,31 +125,60 @@ struct Preset: Codable, Identifiable, Equatable, Sendable {
     var hasEffect: Bool {
         width.mode != .unchanged
             || height.mode != .unchanged
-            || position == .center
+            || position != .keep
             || offsetX != 0
             || offsetY != 0
     }
 
     static func seedPresets() -> [Preset] {
-        [
+        let shortcutModifiers: HotKeyModifiers = [.command, .control]
+
+        return [
             Preset(
                 name: String(localized: "preset.seed.fixed"),
-                width: .points(400),
-                height: .points(600),
-                position: .center
+                width: .percent(80),
+                height: .percent(80),
+                position: .center,
+                shortcut: HotKeyShortcut(
+                    keyCode: UInt32(kVK_Return),
+                    modifiers: shortcutModifiers,
+                    keyLabel: "↩"
+                )
             ),
             Preset(
-                name: String(localized: "preset.seed.percent"),
-                width: .percent(90),
-                height: .percent(70),
-                position: .center
+                name: String(localized: "preset.seed.leftHalf"),
+                width: .percent(50),
+                height: .percent(100),
+                position: .leftEdge,
+                offsetX: 1,
+                offsetY: 1,
+                shortcut: HotKeyShortcut(
+                    keyCode: UInt32(kVK_LeftArrow),
+                    modifiers: shortcutModifiers,
+                    keyLabel: "←"
+                )
+            ),
+            Preset(
+                name: String(localized: "preset.seed.rightHalf"),
+                width: .percent(50),
+                height: .percent(100),
+                position: .rightEdge,
+                shortcut: HotKeyShortcut(
+                    keyCode: UInt32(kVK_RightArrow),
+                    modifiers: shortcutModifiers,
+                    keyLabel: "→"
+                )
             ),
             Preset(
                 name: String(localized: "preset.seed.offset"),
-                offsetX: 60,
-                offsetY: 60
+                offsetX: 20,
+                offsetY: 20,
+                shortcut: HotKeyShortcut(
+                    keyCode: UInt32(kVK_Delete),
+                    modifiers: shortcutModifiers,
+                    keyLabel: "⌫"
+                )
             )
         ]
     }
 }
-
