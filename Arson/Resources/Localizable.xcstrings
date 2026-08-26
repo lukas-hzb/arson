@@ -53,6 +53,7 @@
     "menu.preset" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Preset" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Preset" } } } },
     "menu.quit" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Arson beenden" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Quit Arson" } } } },
     "menu.showIntroduction" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Einführung anzeigen" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Show Introduction" } } } },
+    "update.check" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Nach Updates suchen…" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Check for Updates…" } } } },
     "onboarding.allow" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Bedienungshilfen erlauben" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Allow Accessibility" } } } },
     "onboarding.back" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Zurück" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Back" } } } },
     "onboarding.continue" : { "localizations" : { "de" : { "stringUnit" : { "state" : "translated", "value" : "Weiter" } }, "en" : { "stringUnit" : { "state" : "translated", "value" : "Continue" } } } },

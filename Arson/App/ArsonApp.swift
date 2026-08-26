@@ -11,6 +11,11 @@ struct ArsonApp: App {
                 .onAppear { appDelegate.markWindowVisible() }
         }
         .commands {
+            CommandGroup(after: .appInfo) {
+                if appDelegate.updates.isConfigured {
+                    CheckForUpdatesCommand(updates: appDelegate.updates)
+                }
+            }
             CommandGroup(after: .help) {
                 Divider()
                 Button("menu.showIntroduction") {
@@ -18,5 +23,16 @@ struct ArsonApp: App {
                 }
             }
         }
+    }
+}
+
+private struct CheckForUpdatesCommand: View {
+    @ObservedObject var updates: UpdateService
+
+    var body: some View {
+        Button("update.check") {
+            updates.checkForUpdates()
+        }
+        .disabled(!updates.canCheckForUpdates)
     }
 }

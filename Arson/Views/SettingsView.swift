@@ -5,7 +5,7 @@ struct SettingsView: View {
     @EnvironmentObject private var model: AppModel
     @AppStorage("showMenuBarItem") private var showMenuBarItem = true
     @AppStorage(MenuBarIconStyle.preferenceKey)
-    private var menuBarIconStyle: MenuBarIconStyle = .windows
+    private var menuBarIconStyle: MenuBarIconStyle = .defaultStyle
     @FocusState private var focusedControl: FocusedControl?
 
     var body: some View {

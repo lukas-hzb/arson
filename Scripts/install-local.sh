@@ -216,6 +216,7 @@ install_current_build() {
         CODE_SIGNING_ALLOWED=YES \
         CODE_SIGNING_REQUIRED=NO \
         CODE_SIGN_IDENTITY=- \
+        CODE_SIGN_ENTITLEMENTS=Arson/Resources/ArsonLocal.entitlements \
         build
 
     if [[ ! -d "$BUILT_APP" ]]; then

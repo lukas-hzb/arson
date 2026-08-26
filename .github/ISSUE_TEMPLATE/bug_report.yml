@@ -1,0 +1,73 @@
+name: Bug report
+description: Report reproducible incorrect behavior in Arson.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Arson. Do not include security vulnerabilities or sensitive logs here; follow SECURITY.md instead.
+  - type: input
+    id: version
+    attributes:
+      label: Arson version
+      description: Include both the version and build number when available.
+      placeholder: "1.0.0 (1)"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS and hardware
+      placeholder: "macOS 26.0, Apple Silicon"
+    validations:
+      required: true
+  - type: input
+    id: target_app
+    attributes:
+      label: Affected application
+      description: Name the application whose window Arson was controlling, if applicable.
+      placeholder: "Safari 26.0"
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the actual and expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Focus ...
+        2. Trigger ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: dropdown
+    id: fullscreen
+    attributes:
+      label: Was the focused application in full screen?
+      options:
+        - "No"
+        - "Yes"
+        - "Not applicable"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or additional context
+      description: Remove personal data, paths, window titles, and secrets before posting.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues for this problem.
+          required: true
+        - label: This report does not disclose a security vulnerability.
+          required: true

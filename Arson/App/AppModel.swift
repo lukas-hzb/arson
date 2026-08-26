@@ -1,3 +1,4 @@
+import AppKit
 import Combine
 import Foundation
 
@@ -14,6 +15,8 @@ final class AppModel: ObservableObject {
     private let hud: HUDController
     private var observations: Set<AnyCancellable> = []
     private var windowActionTask: Task<Void, Never>?
+    private var fullScreenObservationTask: Task<Void, Never>?
+    private var hotKeysAreSuspended = false
 
     init(
         store: PresetStore = PresetStore(),
@@ -44,7 +47,10 @@ final class AppModel: ObservableObject {
         store.onChange = { [weak self] presets in
             self?.refreshHotKeys(presets)
         }
+
+        observeFullScreenChanges()
         refreshHotKeys(store.presets)
+        refreshFullScreenState()
     }
 
     func perform(presetID: UUID) {
@@ -64,6 +70,8 @@ final class AppModel: ObservableObject {
                 _ = try await windowController.apply(preset)
             } catch is CancellationError {
                 // A newer preset replaces a pending window operation.
+            } catch let error as WindowActionError where !error.presentsHUD {
+                // Native full-screen windows retain their own keyboard shortcuts.
             } catch {
                 hud.show(message: error.localizedDescription, on: nil)
             }
@@ -71,11 +79,15 @@ final class AppModel: ObservableObject {
     }
 
     func refreshHotKeys(_ presets: [Preset]? = nil) {
-        hotKeyErrors = hotKeys.register(presets ?? store.presets)
+        hotKeyErrors = hotKeys.register(
+            presets ?? store.presets,
+            isEnabled: !hotKeysAreSuspended
+        )
     }
 
     func shutdown() {
         windowActionTask?.cancel()
+        fullScreenObservationTask?.cancel()
         hotKeys.unregisterAll()
     }
 
@@ -97,5 +109,42 @@ final class AppModel: ObservableObject {
             messages.append(error)
         }
         return messages
+    }
+
+    private func observeFullScreenChanges() {
+        let workspaceNotifications = NSWorkspace.shared.notificationCenter
+        Publishers.Merge(
+            workspaceNotifications.publisher(for: NSWorkspace.didActivateApplicationNotification),
+            workspaceNotifications.publisher(for: NSWorkspace.activeSpaceDidChangeNotification)
+        )
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] _ in
+            self?.refreshFullScreenState()
+        }
+        .store(in: &observations)
+    }
+
+    private func refreshFullScreenState() {
+        fullScreenObservationTask?.cancel()
+        fullScreenObservationTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            await updateFullScreenState()
+
+            // Space changes are delivered while macOS is still settling the target
+            // application's focused window. Confirm once more after the transition.
+            do {
+                try await Task.sleep(for: .milliseconds(350))
+            } catch {
+                return
+            }
+            await updateFullScreenState()
+        }
+    }
+
+    private func updateFullScreenState() async {
+        let shouldSuspend = await windowController.frontmostWindowIsFullScreen()
+        guard !Task.isCancelled, shouldSuspend != hotKeysAreSuspended else { return }
+        hotKeysAreSuspended = shouldSuspend
+        refreshHotKeys()
     }
 }

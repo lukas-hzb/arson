@@ -6,12 +6,14 @@ final class MenuBarController: NSObject, NSMenuDelegate {
     private static let visibilityPreferenceKey = "showMenuBarItem"
 
     private let model: AppModel
+    private let updates: UpdateService
     private let menu = NSMenu()
     private var statusItem: NSStatusItem?
     private var observations: Set<AnyCancellable> = []
 
-    init(model: AppModel) {
+    init(model: AppModel, updates: UpdateService) {
         self.model = model
+        self.updates = updates
         super.init()
 
         menu.delegate = self
@@ -84,7 +86,7 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         let storedStyle = UserDefaults.standard.string(
             forKey: MenuBarIconStyle.preferenceKey
         )
-        let style = storedStyle.flatMap(MenuBarIconStyle.init(rawValue:)) ?? .windows
+        let style = storedStyle.flatMap(MenuBarIconStyle.init(rawValue:)) ?? .defaultStyle
 
         let image: NSImage?
         switch style {
@@ -139,6 +141,17 @@ final class MenuBarController: NSObject, NSMenuDelegate {
         openItem.target = self
         menu.addItem(openItem)
 
+        if updates.isConfigured {
+            let updateItem = NSMenuItem(
+                title: String(localized: "update.check"),
+                action: #selector(checkForUpdates(_:)),
+                keyEquivalent: ""
+            )
+            updateItem.target = self
+            updateItem.isEnabled = updates.canCheckForUpdates
+            menu.addItem(updateItem)
+        }
+
         if !model.permissions.isTrusted {
             let permissionItem = NSMenuItem(
                 title: String(localized: "permission.openSettings"),
@@ -180,6 +193,10 @@ final class MenuBarController: NSObject, NSMenuDelegate {
 
     @objc private func openPermissionSettings(_ sender: Any?) {
         model.permissions.openSystemSettings()
+    }
+
+    @objc private func checkForUpdates(_ sender: Any?) {
+        updates.checkForUpdates()
     }
 
     @objc private func quitArson(_ sender: Any?) {

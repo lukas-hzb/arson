@@ -4,6 +4,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     static private(set) var shared: AppDelegate!
     let model = AppModel()
+    let updates = UpdateService()
     private var mainWindowController: MainWindowController?
     private var menuBarController: MenuBarController?
     private var isWaitingToBecomeAccessory = false
@@ -18,7 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if arguments.contains("-ui-testing-reset") {
             UserDefaults.standard.set(true, forKey: "showMenuBarItem")
             UserDefaults.standard.set(
-                MenuBarIconStyle.windows.rawValue,
+                MenuBarIconStyle.defaultStyle.rawValue,
                 forKey: MenuBarIconStyle.preferenceKey
             )
         }
@@ -28,7 +29,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
-        menuBarController = MenuBarController(model: model)
+        updates.start()
+        menuBarController = MenuBarController(model: model, updates: updates)
         showMainWindow()
     }
 

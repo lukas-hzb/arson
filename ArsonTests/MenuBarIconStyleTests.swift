@@ -5,6 +5,7 @@ import Testing
 struct MenuBarIconStyleTests {
     @Test func stylesHaveStablePersistenceValues() {
         #expect(MenuBarIconStyle.allCases == [.windows, .flame])
+        #expect(MenuBarIconStyle.defaultStyle == .flame)
         #expect(MenuBarIconStyle(rawValue: "windows") == .windows)
         #expect(MenuBarIconStyle(rawValue: "flame") == .flame)
     }

@@ -34,9 +34,14 @@ final class GlobalHotKeyManager {
         installHandler()
     }
 
-    func register(_ presets: [Preset]) -> [UUID: HotKeyValidationError] {
+    func register(
+        _ presets: [Preset],
+        isEnabled: Bool = true
+    ) -> [UUID: HotKeyValidationError] {
         unregisterAll()
         var errors = Self.validationErrors(in: presets)
+        guard isEnabled else { return errors }
+
         var identifier: UInt32 = 1
 
         for preset in presets {

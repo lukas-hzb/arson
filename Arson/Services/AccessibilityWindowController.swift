@@ -42,6 +42,10 @@ enum WindowActionError: LocalizedError, Equatable {
             return String(localized: "error.accessibilityFailure")
         }
     }
+
+    var presentsHUD: Bool {
+        self != .fullScreenWindow
+    }
 }
 
 // Accessibility calls into another process are synchronous. A dedicated actor keeps
@@ -53,6 +57,26 @@ actor AccessibilityWindowController {
     private let geometry = WindowGeometryEngine()
     private let logger = Logger(subsystem: "de.lukasharzbecker.arson", category: "Accessibility")
     private var operationGeneration: UInt64 = 0
+
+    func frontmostWindowIsFullScreen() async -> Bool {
+        let processIdentifier = await MainActor.run { () -> pid_t? in
+            guard AXIsProcessTrusted(),
+                  let application = NSWorkspace.shared.frontmostApplication,
+                  application.processIdentifier != ProcessInfo.processInfo.processIdentifier else {
+                return nil
+            }
+            return application.processIdentifier
+        }
+        guard let processIdentifier else { return false }
+
+        let appElement = AXUIElementCreateApplication(processIdentifier)
+        AXUIElementSetMessagingTimeout(appElement, Self.messagingTimeout)
+        guard let window = try? copyElement(appElement, attribute: kAXFocusedWindowAttribute) else {
+            return false
+        }
+        AXUIElementSetMessagingTimeout(window, Self.messagingTimeout)
+        return (try? copyValue(window, attribute: "AXFullScreen")) ?? false
+    }
 
     func apply(_ preset: Preset) async throws -> ScreenDescriptor {
         operationGeneration &+= 1
