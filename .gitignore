@@ -3,6 +3,9 @@
 NOTES.md
 DerivedData/
 .build/
+*.xcresult/
+*.xctest/
+*Tests-Runner.app/
 *.xcuserstate
 xcuserdata/
 *.xccheckout
