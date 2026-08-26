@@ -57,6 +57,8 @@ jobs:
             -project Arson.xcodeproj \
             -scheme Arson \
             -configuration Release \
-            -destination 'platform=macOS' \
+            -destination 'generic/platform=macOS' \
             -derivedDataPath "$RUNNER_TEMP/ArsonReleaseDerivedData" \
             CODE_SIGNING_ALLOWED=NO
+          lipo -verify_arch arm64 x86_64 \
+            "$RUNNER_TEMP/ArsonReleaseDerivedData/Build/Products/Release/Arson.app/Contents/MacOS/Arson"

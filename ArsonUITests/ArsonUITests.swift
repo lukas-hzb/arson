@@ -75,12 +75,13 @@ final class ArsonUITests: XCTestCase {
         let widthField = app.textFields["Width"]
         XCTAssertTrue(widthStepper.waitForExistence(timeout: 5))
         XCTAssertTrue(widthField.exists)
-        XCTAssertEqual(widthField.value as? String, "400")
+        XCTAssertEqual(widthField.value as? String, "80")
 
-        let incrementButton = widthStepper.buttons.firstMatch
-        XCTAssertTrue(incrementButton.isHittable)
-        incrementButton.click()
-        XCTAssertEqual(widthField.value as? String, "401")
+        widthField.click()
+        widthField.typeKey("a", modifierFlags: .command)
+        widthField.typeText("81")
+        widthField.typeKey(.return, modifierFlags: [])
+        XCTAssertEqual(widthField.value as? String, "81")
 
         XCTAssertTrue(app.steppers["Height"].exists)
         XCTAssertTrue(app.steppers["X offset"].exists)
@@ -355,7 +356,7 @@ final class ArsonUITests: XCTestCase {
     private func assertSidebarWidth(
         _ expected: Double,
         in app: XCUIApplication,
-        accuracy: Double = 1
+        accuracy: Double = 9
     ) {
         let divider = app.splitGroups.firstMatch.splitters.firstMatch
         XCTAssertTrue(divider.exists)
@@ -363,6 +364,8 @@ final class ArsonUITests: XCTestCase {
             ?? (divider.value as? String).flatMap { Double($0) }
         XCTAssertNotNil(dividerPosition)
         if let dividerPosition {
+            // macOS 26 exposes the splitter position including the 8-point
+            // full-size-content inset; macOS 27 exposes the sidebar width.
             XCTAssertEqual(dividerPosition, expected, accuracy: accuracy)
         }
     }

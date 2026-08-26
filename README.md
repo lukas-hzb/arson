@@ -79,6 +79,12 @@ Unit tests cover geometry, window animation, display coordinate conversion, pers
 
 Xcode temporarily creates and registers test app bundles. After command-line or Xcode tests, run `./Scripts/install-local.sh --no-open` to remove those bundles and restore `/Applications/Arson.app` as the only registered copy.
 
+## Distributing releases
+
+Local and CI builds are not signed with an Apple Developer ID and are not notarized. Publish those builds only as clearly labeled pre-releases for trusted testers: Gatekeeper blocks their normal first launch, so testers must explicitly approve opening them in Finder or System Settings.
+
+For a normal public release outside the Mac App Store, archive a universal Release build, sign it with a **Developer ID Application** certificate and a secure timestamp, submit it to Apple's notary service, staple the resulting ticket, and verify the final artifact with `codesign`, `spctl`, and `stapler` before uploading it. Keep signing certificates and notarization credentials in protected CI secrets, never in the repository. See Apple's [notarization documentation](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution).
+
 ## Known limits
 
 Version 1 has no app-specific rules, tiling layouts, absolute screen coordinates, post-offset edge correction, cloud sync, preset import/export, automatic updates, or notarized releases. Full-screen, non-resizable, and Arson-owned windows are left unchanged.

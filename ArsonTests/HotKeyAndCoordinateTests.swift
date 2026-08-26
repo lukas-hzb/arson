@@ -32,6 +32,35 @@ struct HotKeyAndCoordinateTests {
         #expect(GlobalHotKeyManager.validate(shortcut) == nil)
     }
 
+    @Test func duplicateShortcutsDisableEveryConflictingPreset() {
+        let shortcut = HotKeyShortcut(
+            keyCode: UInt32(kVK_ANSI_1),
+            modifiers: [.command, .control],
+            keyLabel: "1"
+        )
+        let first = Preset(name: "First", width: .percent(50), shortcut: shortcut)
+        let second = Preset(name: "Second", width: .percent(50), shortcut: shortcut)
+
+        let errors = GlobalHotKeyManager.validationErrors(in: [first, second])
+
+        #expect(errors[first.id] == .duplicateShortcut)
+        #expect(errors[second.id] == .duplicateShortcut)
+    }
+
+    @Test func inactivePresetDoesNotCreateAHotKeyConflict() {
+        let shortcut = HotKeyShortcut(
+            keyCode: UInt32(kVK_ANSI_1),
+            modifiers: [.command, .control],
+            keyLabel: "1"
+        )
+        let inactive = Preset(name: "", width: .percent(50), shortcut: shortcut)
+        let active = Preset(name: "Active", width: .percent(50), shortcut: shortcut)
+
+        let errors = GlobalHotKeyManager.validationErrors(in: [inactive, active])
+
+        #expect(errors.isEmpty)
+    }
+
     @Test func unmodifiedDeleteClearsTheRecordedShortcut() {
         #expect(
             ShortcutRecorderInput.clearsShortcut(

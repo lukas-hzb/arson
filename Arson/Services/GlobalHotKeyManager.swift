@@ -36,20 +36,14 @@ final class GlobalHotKeyManager {
 
     func register(_ presets: [Preset]) -> [UUID: HotKeyValidationError] {
         unregisterAll()
-        var errors: [UUID: HotKeyValidationError] = [:]
-        var seen = Set<HotKeyShortcut>()
+        var errors = Self.validationErrors(in: presets)
         var identifier: UInt32 = 1
 
         for preset in presets {
-            guard let shortcut = preset.shortcut else { continue }
-            if let validationError = Self.validate(shortcut) {
-                errors[preset.id] = validationError
-                continue
-            }
-            guard seen.insert(shortcut).inserted else {
-                errors[preset.id] = .duplicateShortcut
-                continue
-            }
+            guard preset.isValid,
+                  preset.hasEffect,
+                  let shortcut = preset.shortcut,
+                  errors[preset.id] == nil else { continue }
 
             var reference: EventHotKeyRef?
             let hotKeyID = EventHotKeyID(signature: signature, id: identifier)
@@ -69,6 +63,34 @@ final class GlobalHotKeyManager {
             presetIDs[identifier] = preset.id
             identifier += 1
         }
+        return errors
+    }
+
+    static func validationErrors(in presets: [Preset]) -> [UUID: HotKeyValidationError] {
+        var errors: [UUID: HotKeyValidationError] = [:]
+
+        for preset in presets {
+            guard let shortcut = preset.shortcut,
+                  let error = validate(shortcut) else { continue }
+            errors[preset.id] = error
+        }
+
+        let activeShortcuts = presets.compactMap { preset -> (UUID, HotKeyShortcut)? in
+            guard preset.isValid,
+                  preset.hasEffect,
+                  let shortcut = preset.shortcut,
+                  errors[preset.id] == nil else { return nil }
+            return (preset.id, shortcut)
+        }
+        let presetIDsByShortcut = Dictionary(grouping: activeShortcuts, by: \.1)
+            .mapValues { entries in entries.map(\.0) }
+
+        for presetIDs in presetIDsByShortcut.values where presetIDs.count > 1 {
+            for presetID in presetIDs {
+                errors[presetID] = .duplicateShortcut
+            }
+        }
+
         return errors
     }
 
