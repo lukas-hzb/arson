@@ -51,7 +51,7 @@ The following placeholders can be replaced when final screenshots are available.
 4. Grant access under **System Settings → Privacy & Security → Device Control & Data Access**. On older macOS versions, the setting is named **Accessibility**.
 
 > [!IMPORTANT]
-> The current preview is not signed with an Apple Developer ID or notarized. macOS may block its first launch until it is explicitly approved in Finder or **System Settings → Privacy & Security**. A regular public release should be signed and notarized.
+> The current preview is not signed with an Apple Developer ID or notarized. macOS may block its first launch until it is explicitly approved in Finder or **System Settings → Privacy & Security**.
 
 ### Build from source
 
