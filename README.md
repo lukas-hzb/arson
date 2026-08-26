@@ -27,7 +27,7 @@ Arson keeps window management simple: focus a window, trigger a preset, and cont
 - **Native menu bar workflow** — The flame is the default menu bar symbol; alternative symbols and a fully hidden mode are available.
 - **Background operation** — Closing the main window keeps presets and shortcuts available. Arson can also start at login.
 - **Private by design** — Window data stays on the Mac. Arson has no analytics or telemetry; only the optional update check contacts GitHub.
-- **Signed update support** — Release builds use Sparkle for manual and optional automatic update checks.
+- **Authenticated updates** — Sparkle verifies update archives and feeds with Arson's EdDSA key; this is separate from Apple Developer ID signing and notarization.
 
 ### Screenshots
 
@@ -74,6 +74,7 @@ The installer builds the current checkout and maintains one canonical developmen
 1. Focus the window you want to change.
 2. Choose a preset from Arson, the menu bar, or its assigned global shortcut.
 3. Use the preset editor to combine independent width, height, position, and offset settings.
+4. Use **Arson → Check for Updates…** or the matching menu bar item to check the configured release feed.
 
 Fresh configurations include four starter presets:
 
