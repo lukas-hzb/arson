@@ -1,6 +1,6 @@
 # Development Guide
 
-This guide covers local setup, project conventions, testing, and the behavior that is easiest to misunderstand when working on Arson.
+This is the canonical reference for local development and repository commands. It covers setup, project conventions, testing, troubleshooting, and the behavior that is easiest to misunderstand when working on Arson. Release-only workflows belong in [RELEASING.md](RELEASING.md).
 
 ## Requirements
 

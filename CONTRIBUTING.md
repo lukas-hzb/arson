@@ -2,6 +2,12 @@
 
 Bug reports and focused feature proposals are welcome. Because Arson is proprietary source-available software, code contributions require prior written authorization from the maintainer before creating a public fork or submitting a pull request.
 
+## Documentation and Commands
+
+Keep `README.md` focused on installing and using Arson. Local development, testing, troubleshooting, and repository commands belong in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). Signing, packaging, appcast, and publication commands belong in [docs/RELEASING.md](docs/RELEASING.md).
+
+When adding a new contributor or maintainer workflow, extend the most relevant guide and link to it instead of duplicating command sequences in the README or this file.
+
 ## Report a Bug
 
 Use the repository's bug report form and include:

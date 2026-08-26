@@ -1,8 +1,8 @@
+<h1 align="center">Arson</h1>
+
 <p align="center">
   <img src="Arson/Resources/Assets.xcassets/AppIcon.appiconset/icon_256x256.png" alt="Arson app icon" width="128" height="128" />
 </p>
-
-<h1 align="center">Arson</h1>
 
 <p align="center">
   A focused, native macOS utility for resizing and positioning windows with reusable presets and global shortcuts.
@@ -103,8 +103,6 @@ Arson/
 
 - [Development and testing](docs/DEVELOPMENT.md)
 - [Release and update process](docs/RELEASING.md)
-- [Contributing](CONTRIBUTING.md)
-- [Security policy](SECURITY.md)
 - [Changelog](CHANGELOG.md)
 
 ## Tech Stack
@@ -124,12 +122,22 @@ Arson/
 
 Version 1 does not yet include app-specific rules, tiling layouts, absolute screen coordinates, cloud sync, preset import/export, or post-offset edge correction. Public releases are not yet notarized.
 
+## Security
+
+Report vulnerabilities privately and do not include exploit details, signing material, or sensitive logs in a public issue. See the [security policy](SECURITY.md) for supported versions, scope, and the reporting process.
+
 ## Credits
 
 Arson is built with Apple's Swift, SwiftUI, AppKit, Accessibility, Carbon, and Service Management technologies.
 
 - **[Sparkle](https://sparkle-project.org/)** provides the update framework under its own license.
 - Third-party notices distributed with the app are stored in [`Arson/Resources/ThirdPartyLicenses`](Arson/Resources/ThirdPartyLicenses).
+
+## Contributing
+
+Bug reports and focused feature proposals are welcome. Code contributions and public forks require prior written authorization because Arson is proprietary source-available software. See [CONTRIBUTING.md](CONTRIBUTING.md) for the process and contribution terms.
+
+Development and test commands live in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md); release-only commands live in [docs/RELEASING.md](docs/RELEASING.md).
 
 ## License
 
