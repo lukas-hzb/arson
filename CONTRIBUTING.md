@@ -24,6 +24,10 @@ Security vulnerabilities must follow [SECURITY.md](SECURITY.md) and must not be 
 
 Open a feature request describing the user problem, the expected workflow, and any alternatives considered. Keep proposals focused on window management and Arson's native macOS scope.
 
+### Known Limitations
+
+Version 1 does not yet include app-specific rules, tiling layouts, absolute screen coordinates, cloud sync, preset import/export, or post-offset edge correction. Public releases are not yet notarized.
+
 ## Submit an Authorized Change
 
 1. Obtain written authorization from the maintainer for the proposed contribution and fork.

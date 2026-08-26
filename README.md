@@ -118,14 +118,6 @@ Arson/
 | **Tests** | Swift Testing and XCTest |
 | **Automation** | GitHub Actions |
 
-## Known Limits
-
-Version 1 does not yet include app-specific rules, tiling layouts, absolute screen coordinates, cloud sync, preset import/export, or post-offset edge correction. Public releases are not yet notarized.
-
-## Security
-
-Report vulnerabilities privately and do not include exploit details, signing material, or sensitive logs in a public issue. See the [security policy](SECURITY.md) for supported versions, scope, and the reporting process.
-
 ## Credits
 
 Arson is built with Apple's Swift, SwiftUI, AppKit, Accessibility, Carbon, and Service Management technologies.
@@ -135,7 +127,7 @@ Arson is built with Apple's Swift, SwiftUI, AppKit, Accessibility, Carbon, and S
 
 ## Contributing
 
-Bug reports and focused feature proposals are welcome. Code contributions and public forks require prior written authorization because Arson is proprietary source-available software. See [CONTRIBUTING.md](CONTRIBUTING.md) for the process and contribution terms.
+Bug reports and focused feature proposals are welcome. Code contributions and public forks require prior written authorization because Arson is proprietary source-available software. See [CONTRIBUTING.md](CONTRIBUTING.md) for known limitations, the contribution process, and contribution terms. Report vulnerabilities according to [SECURITY.md](SECURITY.md).
 
 Development and test commands live in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md); release-only commands live in [docs/RELEASING.md](docs/RELEASING.md).
 
