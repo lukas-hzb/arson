@@ -17,4 +17,4 @@ This directory contains the screenshots displayed in the public project README.
 - Keep the application language consistent.
 - Crop away unrelated desktop content.
 - Prefer PNG for screenshots and optimize files without reducing readability.
-- Aim for a similar aspect ratio across each row in the README.
+- Stack the screenshots in separate single-column tables to preserve the README's borders and centered captions: show the main window at full width and keep the menu bar below it limited to 500 pixels wide.
