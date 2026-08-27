@@ -3,6 +3,7 @@
 NOTES.md
 DerivedData/
 .build/
+node_modules/
 *.xcresult/
 *.xctest/
 *Tests-Runner.app/

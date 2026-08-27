@@ -6,7 +6,7 @@ struct PresetEditorView: View {
 
     var body: some View {
         Form {
-            Section("editor.general") {
+            Section {
                 LabeledContent {
                     InlineValidatedControl(
                         validationMessage: preset.name.trimmingCharacters(
@@ -26,6 +26,16 @@ struct PresetEditorView: View {
                     Text("editor.name")
                         .foregroundStyle(.primary)
                         .accessibilityIdentifier("configurationFieldLabel")
+                }
+            } header: {
+                Text("editor.general")
+            } footer: {
+                if !preset.hasEffect {
+                    ValidationMessage(
+                        String(localized: "validation.noEffect"),
+                        color: .orange,
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
                 }
             }
 
@@ -80,18 +90,9 @@ struct PresetEditorView: View {
             } header: {
                 Text("editor.position")
             } footer: {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("editor.offsetHint")
-                        .accessibilityIdentifier("configurationHelpText")
-                    if !preset.hasEffect {
-                        ValidationMessage(
-                            String(localized: "validation.noEffect"),
-                            color: .orange,
-                            systemImage: "exclamationmark.triangle.fill"
-                        )
-                    }
-                }
-                .foregroundStyle(.primary)
+                Text("editor.offsetHint")
+                    .accessibilityIdentifier("configurationHelpText")
+                    .foregroundStyle(.primary)
             }
 
             Section {

@@ -96,6 +96,11 @@ final class MenuBarController: NSObject, NSMenuDelegate {
             image = (NSImage(named: "MenuBarFlame")?.copy() as? NSImage) ?? windowsImage
             image?.size = NSSize(width: 18, height: 18)
             image?.accessibilityDescription = "Arson"
+        case .appWindow:
+            image = NSImage(
+                systemSymbolName: "macwindow",
+                accessibilityDescription: "Arson"
+            ) ?? windowsImage
         }
 
         image?.isTemplate = true

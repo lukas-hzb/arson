@@ -16,6 +16,15 @@ The existing unsigned `v1.0.0` preview predates the updater. Users of that build
 - Notarization credentials stored outside the repository
 - The Arson Sparkle EdDSA private key available under account `de.lukasharzbecker.arson` in the login Keychain
 - A clean, reviewed commit and a passing CI run
+- Node.js 20 or later (24 LTS recommended), npm, and Xcode command-line tools for DMG packaging
+
+Install the pinned [create-dmg](https://github.com/sindresorhus/create-dmg) tooling once after checkout, and again when its lockfile changes:
+
+```bash
+npm ci --prefix Scripts/dmg
+```
+
+These dependencies are only used for packaging, not by Arson itself. The native dependencies need a working Xcode toolchain; if compilation cannot find the C++ headers, run the command with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
 
 The Sparkle private key is as sensitive as a signing password. Back it up before the first public updater-enabled release:
 
@@ -50,11 +59,15 @@ lipo Arson.app/Contents/MacOS/Arson -verify_arch arm64
 lipo Arson.app/Contents/MacOS/Arson -verify_arch x86_64
 ```
 
-Create a DMG that contains the application, an `Applications` shortcut, and the project license:
+Create the installer DMG:
 
 ```bash
 ./Scripts/create-dmg.sh Arson.app .artifacts/updates/Arson-1.1.0.dmg
 ```
+
+The DMG uses a fixed 660 × 400 Finder window, large app and `Applications` icons, a drag-and-drop arrow, and a volume icon derived from Arson's app icon. It opens directly without a license dialog. Xcode includes the repository's `LICENSE` as `Arson.app/Contents/Resources/LICENSE` before signing; rebuild older apps to include this resource. The packaging script does not modify the supplied app bundle, and an existing output is only replaced after the new image passes `hdiutil verify`.
+
+The packaging script deliberately does not sign the DMG or select a Keychain identity. For public releases, sign and notarize the final DMG, then staple its ticket **before** generating the Sparkle appcast. Review the mounted Finder window and test dragging the app into `Applications` before publishing.
 
 Never advertise an unsigned or ad-hoc-signed build in a production appcast.
 

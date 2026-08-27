@@ -25,6 +25,16 @@ jobs:
       - name: Select Xcode 26.5
         run: sudo xcode-select --switch /Applications/Xcode_26.5.app/Contents/Developer
 
+      - name: Set up Node.js for DMG packaging
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: Scripts/dmg/package-lock.json
+
+      - name: Install DMG tools
+        run: npm ci --prefix Scripts/dmg
+
       - name: Build with warnings as errors
         run: |
           xcodebuild build-for-testing \
@@ -71,3 +81,12 @@ jobs:
           release_binary="$RUNNER_TEMP/ArsonReleaseDerivedData/Build/Products/Release/Arson.app/Contents/MacOS/Arson"
           lipo "$release_binary" -verify_arch arm64
           lipo "$release_binary" -verify_arch x86_64
+
+      - name: Build and verify installer DMG
+        run: |
+          cmp LICENSE "$RUNNER_TEMP/ArsonReleaseDerivedData/Build/Products/Release/Arson.app/Contents/Resources/LICENSE"
+          ./Scripts/create-dmg.sh \
+            "$RUNNER_TEMP/ArsonReleaseDerivedData/Build/Products/Release/Arson.app" \
+            "$RUNNER_TEMP/Arson.dmg"
+          hdiutil imageinfo -plist "$RUNNER_TEMP/Arson.dmg" > "$RUNNER_TEMP/Arson-image-info.plist"
+          python3 -c 'import plistlib, sys; assert plistlib.load(open(sys.argv[1], "rb"))["Properties"]["Software License Agreement"] is False' "$RUNNER_TEMP/Arson-image-info.plist"

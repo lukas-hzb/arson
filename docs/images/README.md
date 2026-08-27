@@ -1,15 +1,13 @@
-# Screenshot Guide
+# Screenshots
 
-The SVG files in this directory are temporary placeholders for the public project README.
+This directory contains the screenshots displayed in the public project README.
 
-## Recommended Captures
+## Current Captures
 
-| File | Suggested content |
-| :--- | :---------------- |
-| `main-window.png` | Main Arson window with several representative presets. |
-| `preset-editor.png` | A selected preset showing size, position, offset, and shortcut controls. |
-| `menu-bar.png` | The flame icon and an open menu with presets and update action. |
-| `introduction.png` | A visually useful introduction or permission step. |
+| File | Content |
+| :--- | :------ |
+| `main-window.png` | Main Arson window with the default presets and the Compact preset editor. |
+| `menu-bar.png` | The flame icon and open menu with presets, shortcuts, and app actions. |
 
 ## Capture Checklist
 
@@ -20,5 +18,3 @@ The SVG files in this directory are temporary placeholders for the public projec
 - Crop away unrelated desktop content.
 - Prefer PNG for screenshots and optimize files without reducing readability.
 - Aim for a similar aspect ratio across each row in the README.
-
-After adding the PNG files, replace the corresponding `.svg` paths in the root `README.md`. The placeholders can then be removed.

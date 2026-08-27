@@ -6,6 +6,7 @@ enum MenuBarIconStyle: String, CaseIterable, Identifiable {
 
     case windows
     case flame
+    case appWindow
 
     var id: Self { self }
 }

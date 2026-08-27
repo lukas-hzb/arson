@@ -237,6 +237,7 @@ private extension MenuBarIconStyle {
         switch self {
         case .windows: 0
         case .flame: 1
+        case .appWindow: 2
         }
     }
 
@@ -244,6 +245,7 @@ private extension MenuBarIconStyle {
         switch tag {
         case 0: self = .windows
         case 1: self = .flame
+        case 2: self = .appWindow
         default: return nil
         }
     }
@@ -254,6 +256,8 @@ private extension MenuBarIconStyle {
             String(localized: "settings.menuBarIconWindows")
         case .flame:
             String(localized: "settings.menuBarIconFlame")
+        case .appWindow:
+            String(localized: "settings.menuBarIconAppWindow")
         }
     }
 
@@ -293,6 +297,11 @@ private extension MenuBarIconStyle {
         case .flame:
             sourceImage = NSImage(named: "MenuBarFlame")?.copy() as? NSImage
             artworkSize = Metrics.flameArtworkSize
+        case .appWindow:
+            let configuration = NSImage.SymbolConfiguration(pointSize: 13, weight: .medium)
+            sourceImage = NSImage(systemSymbolName: "macwindow", accessibilityDescription: nil)?
+                .withSymbolConfiguration(configuration)
+            artworkSize = sourceImage?.size ?? .zero
         }
 
         guard let sourceImage else { return nil }

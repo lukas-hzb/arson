@@ -31,15 +31,9 @@ Arson keeps window management simple: focus a window, trigger a preset, and cont
 
 ### Screenshots
 
-The following placeholders can be replaced when final screenshots are available. Capture and replacement guidance is in [`docs/images/README.md`](docs/images/README.md).
-
-| Main Window | Preset Editor |
-| :---------: | :-----------: |
-| <img src="docs/images/main-window.svg" alt="Main window screenshot placeholder" width="500" /> | <img src="docs/images/preset-editor.svg" alt="Preset editor screenshot placeholder" width="500" /> |
-
-| Menu Bar | Introduction |
-| :------: | :----------: |
-| <img src="docs/images/menu-bar.svg" alt="Menu bar screenshot placeholder" width="500" /> | <img src="docs/images/introduction.svg" alt="Introduction screenshot placeholder" width="500" /> |
+| Main Window | Menu Bar |
+| :---------: | :------: |
+| <img src="docs/images/main-window.png" alt="Arson main window showing the default presets and the Compact preset editor" width="500" /> | <img src="docs/images/menu-bar.png" alt="Arson menu bar menu showing presets, shortcuts, and app actions" width="500" /> |
 
 ## Installation
 

@@ -1,0 +1,12 @@
+{
+  "name": "arson-dmg-tools",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Pinned macOS disk image tooling for Arson releases",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "create-dmg": "8.1.0"
+  }
+}
