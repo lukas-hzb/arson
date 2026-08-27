@@ -6,6 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Added
+
+- An App Window menu bar icon option alongside Flame and Windows.
+
+### Changed
+
+- Refreshed the app icon and replaced README placeholders with actual screenshots.
+- Improved the DMG installer with a fixed Finder layout, large icons, a drag-and-drop arrow, and an Arson volume icon.
+- Included the project license inside the app bundle without a license dialog before installation.
+- Moved the warning for presets without an effect to the General section of the editor.
+- Added reproducible DMG packaging and installer checks to CI.
+
 ## [1.1.0] - 2026-08-26
 
 ### Added
