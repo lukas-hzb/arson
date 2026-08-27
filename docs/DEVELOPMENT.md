@@ -42,7 +42,7 @@ Always launch `/Applications/Arson.app` for manual testing. Multiple registered 
 4. Complete the introduction and grant the requested system permission.
 5. After Xcode development, run `./Scripts/install-local.sh` before normal testing so that only the canonical application remains registered.
 
-The project uses automatic signing for local development. App Sandbox is deliberately disabled because Arson controls windows owned by other processes. Hardened Runtime remains enabled. Debug/local builds use a narrowly scoped entitlement so the ad-hoc-signed Sparkle framework can be loaded; production Release builds do not include that exception.
+The project uses automatic signing for local development. App Sandbox is deliberately disabled because Arson controls windows owned by other processes. Hardened Runtime remains enabled. Debug/local builds use a narrowly scoped entitlement so the ad-hoc-signed Sparkle framework can be loaded; Developer ID-signed Release builds do not include that exception. An explicitly approved release without Developer ID uses the same entitlement via a build override, as described in [the release guide](RELEASING.md#releases-without-developer-id).
 
 ## Permissions
 

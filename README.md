@@ -45,7 +45,7 @@ Arson keeps window management simple: focus a window, trigger a preset, and cont
 4. Grant access under **System Settings → Privacy & Security → Device Control & Data Access**. On older macOS versions, the setting is named **Accessibility**.
 
 > [!IMPORTANT]
-> The current preview is not signed with an Apple Developer ID or notarized. macOS may block its first launch until it is explicitly approved in Finder or **System Settings → Privacy & Security**.
+> The current release is not signed with an Apple Developer ID or notarized. macOS may block its first launch until it is explicitly approved under **System Settings → Privacy & Security → Open Anyway**. Only approve a download you trust; see [Apple's guidance](https://support.apple.com/en-us/102445).
 
 ### Build from source
 

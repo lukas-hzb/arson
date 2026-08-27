@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-08-27
+
+This release is ad-hoc signed and not notarized by Apple. The update archive and feed are authenticated separately with Arson's Sparkle EdDSA key.
+
 ### Added
 
 - An App Window menu bar icon option alongside Flame and Windows.
@@ -39,6 +43,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Initial unsigned preview with reusable window presets, independent sizing rules, positioning, offsets, global shortcuts, onboarding, menu bar control, and login-item support.
 
-[Unreleased]: https://github.com/lukas-hzb/arson/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/lukas-hzb/arson/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/lukas-hzb/arson/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/lukas-hzb/arson/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/lukas-hzb/arson/releases/tag/v1.0.0

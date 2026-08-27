@@ -1,19 +1,17 @@
 # Release Guide
 
-Arson is distributed outside the Mac App Store through GitHub Releases. Public releases should be signed with a Developer ID certificate, notarized by Apple, and accompanied by a signed Sparkle appcast.
+Arson is distributed outside the Mac App Store through GitHub Releases. Developer ID signing and Apple notarization are preferred, but are not available for every release. Every update archive and appcast must be authenticated with Arson's existing Sparkle EdDSA key.
 
 ## Release Types
 
 - **Preview / pre-release** — Intended for trusted testers. An unsigned or ad-hoc-signed build may be used only when it is clearly labelled and users are warned about Gatekeeper.
-- **Public release** — A universal, Developer ID-signed, notarized build published as a normal GitHub release with its Sparkle feed.
+- **Public release** — A universal build published as a normal GitHub release with its signed Sparkle feed. Prefer Developer ID signing and notarization. When the maintainer explicitly chooses distribution without them, follow the ad-hoc release procedure below and clearly disclose the Gatekeeper warning.
 
 The existing unsigned `v1.0.0` preview predates the updater. Users of that build must install the first updater-enabled release manually once.
 
 ## Prerequisites
 
-- An active Apple Developer Program membership
-- A valid **Developer ID Application** certificate
-- Notarization credentials stored outside the repository
+- For notarized releases: an active Apple Developer Program membership, a valid **Developer ID Application** certificate, and notarization credentials stored outside the repository
 - The Arson Sparkle EdDSA private key available under account `de.lukasharzbecker.arson` in the login Keychain
 - A clean, reviewed commit and a passing CI run
 - Node.js 20 or later (24 LTS recommended), npm, and Xcode command-line tools for DMG packaging
@@ -67,9 +65,33 @@ Create the installer DMG:
 
 The DMG uses a fixed 660 × 400 Finder window, large app and `Applications` icons, a drag-and-drop arrow, and a volume icon derived from Arson's app icon. It opens directly without a license dialog. Xcode includes the repository's `LICENSE` as `Arson.app/Contents/Resources/LICENSE` before signing; rebuild older apps to include this resource. The packaging script does not modify the supplied app bundle, and an existing output is only replaced after the new image passes `hdiutil verify`.
 
-The packaging script deliberately does not sign the DMG or select a Keychain identity. For public releases, sign and notarize the final DMG, then staple its ticket **before** generating the Sparkle appcast. Review the mounted Finder window and test dragging the app into `Applications` before publishing.
+The packaging script deliberately does not sign the DMG or select a Keychain identity. For notarized releases, sign and notarize the final DMG, then staple its ticket **before** generating the Sparkle appcast. Review the mounted Finder window and test dragging the app into `Applications` before publishing.
 
-Never advertise an unsigned or ad-hoc-signed build in a production appcast.
+## Releases Without Developer ID
+
+Version 1.2.0 is intentionally distributed without Developer ID signing or notarization, with the maintainer's approval. The app must still be ad-hoc signed to seal its resources and preserve Sparkle's update validation. Do not distribute a `CODE_SIGNING_ALLOWED=NO` validation archive directly.
+
+Archive the reviewed release commit with a fresh archive path:
+
+```bash
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
+  xcodebuild archive \
+    -project Arson.xcodeproj \
+    -scheme Arson \
+    -configuration Release \
+    -destination 'generic/platform=macOS' \
+    -archivePath .artifacts/Arson-1.2.0-adhoc.xcarchive \
+    CODE_SIGNING_ALLOWED=YES \
+    CODE_SIGNING_REQUIRED=NO \
+    CODE_SIGN_IDENTITY=- \
+    CODE_SIGN_ENTITLEMENTS=Arson/Resources/ArsonLocal.entitlements
+```
+
+This explicit build override allows the ad-hoc-signed app to load Sparkle while retaining Hardened Runtime. Do not apply it to Developer ID-signed releases.
+
+Verify the archived app with `codesign --verify --deep --strict`, confirm version/build numbers and both architectures, then package it with `Scripts/create-dmg.sh`. Generate and verify the Sparkle archive and feed signatures using the existing key. Publish SHA-256 checksums alongside the exact DMG and appcast, and do not modify those files after signing.
+
+The release title, notes, README, and embedded update notes must disclose that Apple has not verified the developer or notarized the app. Users may need **System Settings → Privacy & Security → Open Anyway** after their first launch attempt; link to [Apple's instructions](https://support.apple.com/en-us/102445). Do not tell users to disable Gatekeeper globally. Sparkle signatures authenticate update files but do not remove macOS security warnings.
 
 ## Generate the Sparkle Appcast
 
@@ -92,7 +114,7 @@ The script resolves the pinned Sparkle tools, signs the update archive and feed 
 ## Publish on GitHub
 
 1. Create the tag and GitHub release using the exact version passed to the appcast script.
-2. Attach the signed/notarized update archive and `appcast.xml`.
+2. Attach the verified update archive, signed `appcast.xml`, and SHA-256 checksums. For notarized releases, verify the stapled tickets first.
 3. Include concise user-facing release notes and upgrade caveats.
 4. Publish a production update as a normal release, not only as a pre-release.
 5. Confirm that the latest feed resolves at:
@@ -103,7 +125,7 @@ The archive URLs embedded in the appcast point to the exact versioned GitHub rel
 ## Post-Release Checks
 
 - Install the release on a Mac without a previous Arson development build.
-- Confirm Gatekeeper assessment succeeds without manual override.
+- For notarized releases, confirm Gatekeeper assessment succeeds without manual override. For an approved ad-hoc release, document the expected warning and check the per-app approval flow instead.
 - Grant the system permission and apply at least one preset to another app.
 - Check for updates from both **Arson → Check for Updates…** and the menu bar item.
 - Confirm the GitHub release contains the archive, appcast, release notes, and correct tag.
