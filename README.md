@@ -31,8 +31,6 @@ Arson keeps window management simple: focus a window, trigger a preset, and cont
 
 ### Screenshots
 
-<div align="center">
-
 | Main Window |
 | :---------: |
 | <img src="docs/images/main-window.png" alt="Arson main window showing the default presets and the Compact preset editor" width="100%" /> |
@@ -40,8 +38,6 @@ Arson keeps window management simple: focus a window, trigger a preset, and cont
 | Menu Bar |
 | :------: |
 | <img src="docs/images/menu-bar.png" alt="Arson menu bar menu showing presets, shortcuts, and app actions" width="400" /> |
-
-</div>
 
 ## Installation
 
