@@ -75,6 +75,8 @@ The display with the greatest overlap with the focused window is used. The visib
 
 The point offset is applied last. Positive X moves right and positive Y moves down. Offsets are intentionally not constrained to screen bounds.
 
+Actions are queued in submission order. Each action finishes before the next reads the focused window and calculates its target, so repeated relative offsets accumulate. A failed action does not discard later actions; quitting Arson cancels active and pending work.
+
 ## Shortcut Rules
 
 Global shortcuts require Command, Control, or Option and one non-modifier key. Shift may be added. Escape cancels recording, and unmodified Delete removes a shortcut; modified Delete can be recorded. Conflicting, reserved, and unavailable shortcuts are shown inline.

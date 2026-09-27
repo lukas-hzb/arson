@@ -14,7 +14,7 @@ final class AppModel: ObservableObject {
     private let windowController: AccessibilityWindowController
     private let hud: HUDController
     private var observations: Set<AnyCancellable> = []
-    private var windowActionTask: Task<Void, Never>?
+    private let windowActions = WindowActionQueue()
     private var fullScreenObservationTask: Task<Void, Never>?
     private var hotKeysAreSuspended = false
 
@@ -60,16 +60,12 @@ final class AppModel: ObservableObject {
 
     func perform(_ preset: Preset) {
         permissions.refresh()
-        let previousTask = windowActionTask
-        previousTask?.cancel()
-        windowActionTask = Task { @MainActor [weak self] in
-            await previousTask?.value
-            guard !Task.isCancelled else { return }
+        windowActions.enqueue { [weak self] in
             guard let self else { return }
             do {
                 _ = try await windowController.apply(preset)
             } catch is CancellationError {
-                // A newer preset replaces a pending window operation.
+                // App shutdown cancels active and pending window operations.
             } catch let error as WindowActionError where !error.presentsHUD {
                 // Native full-screen windows retain their own keyboard shortcuts.
             } catch {
@@ -86,7 +82,7 @@ final class AppModel: ObservableObject {
     }
 
     func shutdown() {
-        windowActionTask?.cancel()
+        windowActions.cancelAll()
         fullScreenObservationTask?.cancel()
         hotKeys.unregisterAll()
     }
