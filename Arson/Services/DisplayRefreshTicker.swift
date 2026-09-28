@@ -4,14 +4,9 @@ import QuartzCore
 
 @MainActor
 final class DisplayRefreshTicker: NSObject {
-    struct Tick: Sendable {
-        let timestamp: TimeInterval
-        let frameInterval: TimeInterval
-    }
+    let ticks: AsyncStream<TimeInterval>
 
-    let ticks: AsyncStream<Tick>
-
-    private let continuation: AsyncStream<Tick>.Continuation
+    private let continuation: AsyncStream<TimeInterval>.Continuation
     private var displayLink: CADisplayLink?
     private var isStopped = false
 
@@ -28,7 +23,7 @@ final class DisplayRefreshTicker: NSObject {
         }
 
         let pair = AsyncStream.makeStream(
-            of: Tick.self,
+            of: TimeInterval.self,
             bufferingPolicy: .bufferingNewest(1)
         )
         ticks = pair.stream
@@ -55,9 +50,6 @@ final class DisplayRefreshTicker: NSObject {
     }
 
     @objc private func displayLinkDidFire(_ displayLink: CADisplayLink) {
-        continuation.yield(Tick(
-            timestamp: displayLink.timestamp,
-            frameInterval: max(displayLink.targetTimestamp - displayLink.timestamp, 0)
-        ))
+        continuation.yield(displayLink.timestamp)
     }
 }

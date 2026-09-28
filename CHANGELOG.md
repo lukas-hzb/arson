@@ -12,8 +12,8 @@ This release is ad-hoc signed and not notarized by Apple. The update archive and
 
 ### Changed
 
-- Window movement now jumps toward its target and settles quickly without overshooting.
-- Repeated shortcuts finish sooner while retaining adaptive resize pacing for slower apps.
+- Window movement uses a gentler finish while starting promptly on the first display update.
+- Repeated shortcuts retain a shorter animation and adaptive resize pacing.
 
 ## [1.2.3] - 2026-09-28
 

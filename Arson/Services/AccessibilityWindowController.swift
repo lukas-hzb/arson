@@ -2,6 +2,7 @@ import ApplicationServices
 import AppKit
 import Foundation
 import OSLog
+import QuartzCore
 
 enum WindowActionError: LocalizedError, Equatable {
     case permissionRequired
@@ -259,28 +260,26 @@ actor AccessibilityWindowController {
         duration: TimeInterval,
         generation: UInt64
     ) async throws -> CGRect {
-        let (ticker, ticks) = try await MainActor.run {
+        let (ticker, ticks, animationStart) = try await MainActor.run {
             guard let ticker = DisplayRefreshTicker(displayID: displayID) else {
                 throw WindowActionError.screenNotFound
             }
             ticker.start()
-            return (ticker, ticker.ticks)
+            return (ticker, ticker.ticks, CACurrentMediaTime())
         }
 
-        var startTime: TimeInterval?
         var lastAppliedFrame = originalFrame
         var lastResizeStartedTime: TimeInterval?
         var lastResizeCompletedTime: TimeInterval?
 
         do {
-            for await tick in ticks {
+            for await _ in ticks {
                 try checkCancellation(for: generation)
-                // Advance on the first display callback instead of spending one
-                // refresh interval on an unchanged frame.
-                let animationStart = startTime ?? (tick.timestamp - min(tick.frameInterval, duration))
-                startTime = animationStart
+                // The display callback may have been queued while AX was busy.
+                // Use processing time so the motion catches up without an idle first frame.
+                let tickTime = CACurrentMediaTime()
                 let linearProgress = min(
-                    max((tick.timestamp - animationStart) / duration, 0),
+                    max((tickTime - animationStart) / duration, 0),
                     1
                 )
                 let progress = WindowFrameAnimation.easeOut(CGFloat(linearProgress))
