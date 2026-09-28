@@ -2,13 +2,14 @@ import CoreGraphics
 import Foundation
 
 struct WindowFrameAnimation: Sendable {
-    static let duration: TimeInterval = 0.30
-    static let resizeUpdateInterval: TimeInterval = 1.0 / 30.0
-    static let resizeRecoveryInterval: TimeInterval = 1.0 / 60.0
+    static let duration: TimeInterval = 0.36
+    static let resizeUpdateInterval: TimeInterval = 1.0 / 60.0
+    static let resizeRecoveryInterval: TimeInterval = 1.0 / 120.0
+    private static let timingTolerance: TimeInterval = 0.000001
 
-    static func easeOut(_ progress: CGFloat) -> CGFloat {
+    static func easeInOut(_ progress: CGFloat) -> CGFloat {
         let clamped = min(max(progress, 0), 1)
-        return 1 - pow(1 - clamped, 3)
+        return clamped * clamped * (3 - 2 * clamped)
     }
 
     static func interpolate(
@@ -68,11 +69,16 @@ struct WindowFrameAnimation: Sendable {
         // A timestamp discontinuity should never prevent the animation from advancing.
         if let startTimestamp {
             guard timestamp >= startTimestamp else { return true }
-            guard timestamp - startTimestamp >= resizeUpdateInterval else { return false }
+            // Give expensive target apps time to finish laying out before the next resize.
+            let updateDuration = completionTimestamp.map { max($0 - startTimestamp, 0) } ?? 0
+            let updateInterval = max(resizeUpdateInterval, updateDuration * 2)
+            guard timestamp - startTimestamp >= updateInterval - timingTolerance else { return false }
         }
         if let completionTimestamp {
             guard timestamp >= completionTimestamp else { return true }
-            guard timestamp - completionTimestamp >= resizeRecoveryInterval else { return false }
+            guard timestamp - completionTimestamp >= resizeRecoveryInterval - timingTolerance else {
+                return false
+            }
         }
         return true
     }

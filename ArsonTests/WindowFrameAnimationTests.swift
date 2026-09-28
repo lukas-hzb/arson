@@ -4,12 +4,14 @@ import Testing
 @testable import Arson
 
 struct WindowFrameAnimationTests {
-    @Test func easeOutUsesExactEndpointsWithoutOvershooting() {
-        #expect(WindowFrameAnimation.easeOut(-1) == 0)
-        #expect(WindowFrameAnimation.easeOut(0) == 0)
-        #expect(WindowFrameAnimation.easeOut(0.5) == 0.875)
-        #expect(WindowFrameAnimation.easeOut(1) == 1)
-        #expect(WindowFrameAnimation.easeOut(2) == 1)
+    @Test func easingStartsAndStopsGentlyWithoutOvershooting() {
+        #expect(WindowFrameAnimation.easeInOut(-1) == 0)
+        #expect(WindowFrameAnimation.easeInOut(0) == 0)
+        #expect(WindowFrameAnimation.easeInOut(0.25) == 0.15625)
+        #expect(WindowFrameAnimation.easeInOut(0.5) == 0.5)
+        #expect(WindowFrameAnimation.easeInOut(0.75) == 0.84375)
+        #expect(WindowFrameAnimation.easeInOut(1) == 1)
+        #expect(WindowFrameAnimation.easeInOut(2) == 1)
     }
 
     @Test func interpolationMovesAndResizesAsOneFrame() {
@@ -129,6 +131,30 @@ struct WindowFrameAnimationTests {
                 at: now,
                 lastStartedAt: now - WindowFrameAnimation.resizeUpdateInterval,
                 lastCompletedAt: now - WindowFrameAnimation.resizeRecoveryInterval / 2,
+                changesSize: true,
+                isFinalFrame: false
+            )
+        )
+    }
+
+    @Test func slowResizesAreSpacedAccordingToTheirActualCost() {
+        let started: TimeInterval = 2
+        let completed = started + 0.02
+
+        #expect(
+            !WindowFrameAnimation.shouldApplyUpdate(
+                at: started + 0.03,
+                lastStartedAt: started,
+                lastCompletedAt: completed,
+                changesSize: true,
+                isFinalFrame: false
+            )
+        )
+        #expect(
+            WindowFrameAnimation.shouldApplyUpdate(
+                at: started + 0.04,
+                lastStartedAt: started,
+                lastCompletedAt: completed,
                 changesSize: true,
                 isFinalFrame: false
             )

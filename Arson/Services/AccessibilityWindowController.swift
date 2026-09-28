@@ -276,13 +276,12 @@ actor AccessibilityWindowController {
                     max((tickTime - animationStart) / WindowFrameAnimation.duration, 0),
                     1
                 )
-                let progress = WindowFrameAnimation.easeOut(CGFloat(linearProgress))
+                let progress = WindowFrameAnimation.easeInOut(CGFloat(linearProgress))
                 let isFinalFrame = linearProgress >= 1
 
                 // Resizing makes the target application synchronously lay out its own
-                // content. Driving that work at 60 or 120 Hz can overwhelm complex apps,
-                // so resize-and-move frames use a lower display-synchronized cadence.
-                // Pure movement remains at the native refresh rate.
+                // content. Fast apps can update at 60 Hz; expensive layouts get more
+                // time between updates. Pure movement keeps the native refresh rate.
                 let updateStartedTime = ProcessInfo.processInfo.systemUptime
                 guard WindowFrameAnimation.shouldApplyUpdate(
                     at: updateStartedTime,
