@@ -90,3 +90,16 @@ jobs:
             "$RUNNER_TEMP/Arson.dmg"
           hdiutil imageinfo -plist "$RUNNER_TEMP/Arson.dmg" > "$RUNNER_TEMP/Arson-image-info.plist"
           python3 -c 'import plistlib, sys; assert plistlib.load(open(sys.argv[1], "rb"))["Properties"]["Software License Agreement"] is False' "$RUNNER_TEMP/Arson-image-info.plist"
+
+      - name: Package app for release signing
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: ditto -c -k --keepParent "$RUNNER_TEMP/ArsonReleaseDerivedData/Build/Products/Release/Arson.app" "$RUNNER_TEMP/Arson-unsigned.zip"
+
+      - name: Upload app for release signing
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: arson-release-app-${{ github.sha }}
+          path: ${{ runner.temp }}/Arson-unsigned.zip
+          if-no-files-found: error
+          retention-days: 1

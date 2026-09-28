@@ -89,6 +89,8 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
 
 This explicit build override allows the ad-hoc-signed app to load Sparkle while retaining Hardened Runtime. Do not apply it to Developer ID-signed releases.
 
+CI also uploads a one-day `arson-release-app-<commit>` artifact containing the unsigned universal app in a ZIP. If a local Xcode archive is unavailable, download that artifact from the successful release commit, extract it with `ditto`, and sign the complete app locally with `codesign --force --deep --options runtime --entitlements Arson/Resources/ArsonLocal.entitlements --sign -`. Verify it with `codesign --verify --deep --strict` before packaging. Never publish the unsigned ZIP or CI's unsigned DMG.
+
 Verify the archived app with `codesign --verify --deep --strict`, confirm version/build numbers and both architectures, then package it with `Scripts/create-dmg.sh`. Generate and verify the Sparkle archive and feed signatures using the existing key. Publish SHA-256 checksums alongside the exact DMG and appcast, and do not modify those files after signing.
 
 The release title, notes, README, and embedded update notes must disclose that Apple has not verified the developer or notarized the app. Users may need **System Settings → Privacy & Security → Open Anyway** after their first launch attempt; link to [Apple's instructions](https://support.apple.com/en-us/102445). Do not tell users to disable Gatekeeper globally. Sparkle signatures authenticate update files but do not remove macOS security warnings.
