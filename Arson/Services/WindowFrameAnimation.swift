@@ -2,15 +2,17 @@ import CoreGraphics
 import Foundation
 
 struct WindowFrameAnimation: Sendable {
-    static let duration: TimeInterval = 0.20
-    static let queuedDuration: TimeInterval = 0.13
+    static let duration: TimeInterval = 0.16
+    static let queuedDuration: TimeInterval = 0.09
     static let resizeUpdateInterval: TimeInterval = 1.0 / 60.0
     static let resizeRecoveryInterval: TimeInterval = 1.0 / 120.0
     private static let timingTolerance: TimeInterval = 0.000001
 
     static func easeOut(_ progress: CGFloat) -> CGFloat {
         let clamped = min(max(progress, 0), 1)
-        return clamped * (2 - clamped)
+        let remaining = 1 - clamped
+        let squared = remaining * remaining
+        return 1 - squared * squared
     }
 
     static func interpolate(

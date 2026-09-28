@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.2.4] - 2026-09-28
+
+This release is ad-hoc signed and not notarized by Apple. The update archive and feed are authenticated separately with Arson's Sparkle EdDSA key.
+
+### Changed
+
+- Window movement now jumps toward its target and settles quickly without overshooting.
+- Repeated shortcuts finish sooner while retaining adaptive resize pacing for slower apps.
+
 ## [1.2.3] - 2026-09-28
 
 This release is ad-hoc signed and not notarized by Apple. The update archive and feed are authenticated separately with Arson's Sparkle EdDSA key.
@@ -71,7 +80,8 @@ This release is ad-hoc signed and not notarized by Apple. The update archive and
 
 - Initial unsigned preview with reusable window presets, independent sizing rules, positioning, offsets, global shortcuts, onboarding, menu bar control, and login-item support.
 
-[Unreleased]: https://github.com/lukas-hzb/arson/compare/v1.2.3...HEAD
+[Unreleased]: https://github.com/lukas-hzb/arson/compare/v1.2.4...HEAD
+[1.2.4]: https://github.com/lukas-hzb/arson/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/lukas-hzb/arson/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/lukas-hzb/arson/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/lukas-hzb/arson/compare/v1.2.0...v1.2.1

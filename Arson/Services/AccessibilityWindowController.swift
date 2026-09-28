@@ -273,12 +273,14 @@ actor AccessibilityWindowController {
         var lastResizeCompletedTime: TimeInterval?
 
         do {
-            for await tickTime in ticks {
+            for await tick in ticks {
                 try checkCancellation(for: generation)
-                let animationStart = startTime ?? tickTime
+                // Advance on the first display callback instead of spending one
+                // refresh interval on an unchanged frame.
+                let animationStart = startTime ?? (tick.timestamp - min(tick.frameInterval, duration))
                 startTime = animationStart
                 let linearProgress = min(
-                    max((tickTime - animationStart) / duration, 0),
+                    max((tick.timestamp - animationStart) / duration, 0),
                     1
                 )
                 let progress = WindowFrameAnimation.easeOut(CGFloat(linearProgress))

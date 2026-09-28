@@ -7,9 +7,9 @@ struct WindowFrameAnimationTests {
     @Test func easingMovesPromptlyAndSettlesWithoutOvershooting() {
         #expect(WindowFrameAnimation.easeOut(-1) == 0)
         #expect(WindowFrameAnimation.easeOut(0) == 0)
-        #expect(WindowFrameAnimation.easeOut(0.25) == 0.4375)
-        #expect(WindowFrameAnimation.easeOut(0.5) == 0.75)
-        #expect(WindowFrameAnimation.easeOut(0.75) == 0.9375)
+        #expect(WindowFrameAnimation.easeOut(0.25) == 0.68359375)
+        #expect(WindowFrameAnimation.easeOut(0.5) == 0.9375)
+        #expect(WindowFrameAnimation.easeOut(0.75) == 0.99609375)
         #expect(WindowFrameAnimation.easeOut(1) == 1)
         #expect(WindowFrameAnimation.easeOut(2) == 1)
     }
