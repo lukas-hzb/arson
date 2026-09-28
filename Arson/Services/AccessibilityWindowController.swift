@@ -78,7 +78,10 @@ actor AccessibilityWindowController {
         return (try? copyValue(window, attribute: "AXFullScreen")) ?? false
     }
 
-    func apply(_ preset: Preset) async throws -> ScreenDescriptor {
+    func apply(
+        _ preset: Preset,
+        animationDuration: TimeInterval = WindowFrameAnimation.duration
+    ) async throws -> ScreenDescriptor {
         operationGeneration &+= 1
         let generation = operationGeneration
         let context = try await MainActor.run {
@@ -171,6 +174,7 @@ actor AccessibilityWindowController {
                     changesSize: changesSize,
                     changesPosition: changesPosition,
                     displayID: screen.displayID,
+                    duration: animationDuration,
                     generation: generation
                 )
                 acceptedSize = finalFrame.size
@@ -252,6 +256,7 @@ actor AccessibilityWindowController {
         changesSize: Bool,
         changesPosition: Bool,
         displayID: CGDirectDisplayID,
+        duration: TimeInterval,
         generation: UInt64
     ) async throws -> CGRect {
         let (ticker, ticks) = try await MainActor.run {
@@ -273,10 +278,10 @@ actor AccessibilityWindowController {
                 let animationStart = startTime ?? tickTime
                 startTime = animationStart
                 let linearProgress = min(
-                    max((tickTime - animationStart) / WindowFrameAnimation.duration, 0),
+                    max((tickTime - animationStart) / duration, 0),
                     1
                 )
-                let progress = WindowFrameAnimation.easeInOut(CGFloat(linearProgress))
+                let progress = WindowFrameAnimation.easeOut(CGFloat(linearProgress))
                 let isFinalFrame = linearProgress >= 1
 
                 // Resizing makes the target application synchronously lay out its own

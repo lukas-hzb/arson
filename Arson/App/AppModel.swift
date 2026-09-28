@@ -63,7 +63,10 @@ final class AppModel: ObservableObject {
         windowActions.enqueue { [weak self] in
             guard let self else { return }
             do {
-                _ = try await windowController.apply(preset)
+                let duration = windowActions.hasPendingActions
+                    ? WindowFrameAnimation.queuedDuration
+                    : WindowFrameAnimation.duration
+                _ = try await windowController.apply(preset, animationDuration: duration)
             } catch is CancellationError {
                 // App shutdown cancels active and pending window operations.
             } catch let error as WindowActionError where !error.presentsHUD {

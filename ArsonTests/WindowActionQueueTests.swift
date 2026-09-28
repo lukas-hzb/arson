@@ -7,10 +7,12 @@ struct WindowActionQueueTests {
     @Test func rapidActionsFinishInSubmissionOrder() async {
         let queue = WindowActionQueue()
         var events: [Int] = []
+        var backlogStates: [Bool] = []
         var position = 0
         var last: Task<Void, Never>?
         for index in 0..<50 {
             last = queue.enqueue {
+                backlogStates.append(queue.hasPendingActions)
                 events.append(index * 2)
                 let initialPosition = position
                 for _ in 0..<5 { await Task.yield() }
@@ -21,6 +23,7 @@ struct WindowActionQueueTests {
         }
         await last?.value
         #expect(events == Array(0..<100))
+        #expect(backlogStates == Array(repeating: true, count: 49) + [false])
         #expect(position == 500)
 
         await queue.enqueue { position += 10 }.value

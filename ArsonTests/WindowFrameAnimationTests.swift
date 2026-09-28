@@ -4,14 +4,14 @@ import Testing
 @testable import Arson
 
 struct WindowFrameAnimationTests {
-    @Test func easingStartsAndStopsGentlyWithoutOvershooting() {
-        #expect(WindowFrameAnimation.easeInOut(-1) == 0)
-        #expect(WindowFrameAnimation.easeInOut(0) == 0)
-        #expect(WindowFrameAnimation.easeInOut(0.25) == 0.15625)
-        #expect(WindowFrameAnimation.easeInOut(0.5) == 0.5)
-        #expect(WindowFrameAnimation.easeInOut(0.75) == 0.84375)
-        #expect(WindowFrameAnimation.easeInOut(1) == 1)
-        #expect(WindowFrameAnimation.easeInOut(2) == 1)
+    @Test func easingMovesPromptlyAndSettlesWithoutOvershooting() {
+        #expect(WindowFrameAnimation.easeOut(-1) == 0)
+        #expect(WindowFrameAnimation.easeOut(0) == 0)
+        #expect(WindowFrameAnimation.easeOut(0.25) == 0.4375)
+        #expect(WindowFrameAnimation.easeOut(0.5) == 0.75)
+        #expect(WindowFrameAnimation.easeOut(0.75) == 0.9375)
+        #expect(WindowFrameAnimation.easeOut(1) == 1)
+        #expect(WindowFrameAnimation.easeOut(2) == 1)
     }
 
     @Test func interpolationMovesAndResizesAsOneFrame() {

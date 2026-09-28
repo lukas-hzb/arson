@@ -6,6 +6,8 @@ final class WindowActionQueue {
     private var tail: Task<Void, Never>?
     private var tasks: [UUID: Task<Void, Never>] = [:]
 
+    var hasPendingActions: Bool { tasks.count > 1 }
+
     @discardableResult
     func enqueue(_ operation: @escaping @MainActor () async -> Void) -> Task<Void, Never> {
         let id = UUID()

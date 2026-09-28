@@ -6,6 +6,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-09-28
+
+This release is ad-hoc signed and not notarized by Apple. The update archive and feed are authenticated separately with Arson's Sparkle EdDSA key.
+
+### Changed
+
+- Window animations respond sooner and complete faster.
+- Actions waiting in the queue use an even shorter animation, so repeated shortcuts catch up quickly while keeping their order.
+
 ## [1.2.2] - 2026-09-28
 
 This release is ad-hoc signed and not notarized by Apple. The update archive and feed are authenticated separately with Arson's Sparkle EdDSA key.
@@ -61,7 +70,8 @@ This release is ad-hoc signed and not notarized by Apple. The update archive and
 
 - Initial unsigned preview with reusable window presets, independent sizing rules, positioning, offsets, global shortcuts, onboarding, menu bar control, and login-item support.
 
-[Unreleased]: https://github.com/lukas-hzb/arson/compare/v1.2.2...HEAD
+[Unreleased]: https://github.com/lukas-hzb/arson/compare/v1.2.3...HEAD
+[1.2.3]: https://github.com/lukas-hzb/arson/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/lukas-hzb/arson/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/lukas-hzb/arson/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/lukas-hzb/arson/compare/v1.1.0...v1.2.0
