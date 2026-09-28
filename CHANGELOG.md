@@ -14,6 +14,7 @@ This release is ad-hoc signed and not notarized by Apple. The update archive and
 
 - Window animations respond sooner and complete faster.
 - Actions waiting in the queue use an even shorter animation, so repeated shortcuts catch up quickly while keeping their order.
+- Refined the layered flame icon for macOS 27 and refreshed the README preview.
 
 ## [1.2.2] - 2026-09-28
 

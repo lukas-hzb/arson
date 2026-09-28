@@ -51,7 +51,7 @@
           "fill" : {
             "solid" : "display-p3:0.96783,0.67006,0.19552,1.00000"
           },
-          "glass" : false,
+          "glass" : true,
           "hidden" : false,
           "image-name" : "svgviewer-output.svg",
           "name" : "svgviewer-output",

@@ -1,7 +1,7 @@
 <h1 align="center">Arson</h1>
 
 <p align="center">
-  <img src="Arson/Resources/Assets.xcassets/AppIcon.appiconset/icon_256x256.png" alt="Arson app icon" width="128" height="128" />
+  <img src="docs/images/app-icon-macos-27.png" alt="Arson flame app icon rendered for macOS 27" width="128" height="128" />
 </p>
 
 <p align="center">
