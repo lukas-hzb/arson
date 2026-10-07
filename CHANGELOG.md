@@ -6,6 +6,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-10-07
+
+This release is ad-hoc signed and not notarized by Apple. The update archive and feed are authenticated separately with Arson's Sparkle EdDSA key.
+
+### Fixed
+
+- Restore the target application's enhanced Accessibility mode after window actions, even when macOS changes the mode but reports a setter error.
+
+### Added
+
+- Optional local window-animation timing diagnostics, disabled by default.
+
+### Known Limitations
+
+- Resizing can still stutter in applications such as Messages. Animation timing and window placement remain unchanged from 1.2.4.
+
 ## [1.2.4] - 2026-09-28
 
 This release is ad-hoc signed and not notarized by Apple. The update archive and feed are authenticated separately with Arson's Sparkle EdDSA key.
@@ -80,7 +96,8 @@ This release is ad-hoc signed and not notarized by Apple. The update archive and
 
 - Initial unsigned preview with reusable window presets, independent sizing rules, positioning, offsets, global shortcuts, onboarding, menu bar control, and login-item support.
 
-[Unreleased]: https://github.com/lukas-hzb/arson/compare/v1.2.4...HEAD
+[Unreleased]: https://github.com/lukas-hzb/arson/compare/v1.2.5...HEAD
+[1.2.5]: https://github.com/lukas-hzb/arson/compare/v1.2.4...v1.2.5
 [1.2.4]: https://github.com/lukas-hzb/arson/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/lukas-hzb/arson/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/lukas-hzb/arson/compare/v1.2.1...v1.2.2

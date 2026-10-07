@@ -83,6 +83,8 @@ actor AccessibilityWindowController {
         _ preset: Preset,
         animationDuration: TimeInterval = WindowFrameAnimation.duration
     ) async throws -> ScreenDescriptor {
+        let actionInterval = WindowAnimationDiagnostics.begin("WindowAction")
+        defer { WindowAnimationDiagnostics.end("WindowAction", actionInterval) }
         operationGeneration &+= 1
         let generation = operationGeneration
         let context = try await MainActor.run {
@@ -153,10 +155,10 @@ actor AccessibilityWindowController {
             throw WindowActionError.windowCannotMove
         }
 
-        let disabledEnhancedUserInterface = disableEnhancedUserInterfaceIfNeeded(appElement)
+        let enhancedUserInterfaceOverride = disableEnhancedUserInterfaceIfNeeded(appElement)
         defer {
-            if disabledEnhancedUserInterface {
-                restoreEnhancedUserInterface(appElement)
+            enhancedUserInterfaceOverride.restore { value in
+                setBoolean(appElement, attribute: Self.enhancedUserInterfaceAttribute, value: value)
             }
         }
 
@@ -231,10 +233,12 @@ actor AccessibilityWindowController {
                 _ = try copySize(window, attribute: kAXSizeAttribute)
             }
         } catch is CancellationError {
+            WindowAnimationDiagnostics.outcome("ActionCancelled")
             // Leave the current interpolated frame in place. A replacement action starts
             // from exactly this visible state instead of jumping back to the old frame.
             throw CancellationError()
         } catch {
+            WindowAnimationDiagnostics.outcome("ActionFailed")
             if didChangeFrame, generation == operationGeneration {
                 rollback(
                     window,
@@ -260,6 +264,13 @@ actor AccessibilityWindowController {
         duration: TimeInterval,
         generation: UInt64
     ) async throws -> CGRect {
+        let animationInterval = WindowAnimationDiagnostics.begin("Animation")
+        defer { WindowAnimationDiagnostics.end("Animation", animationInterval) }
+        WindowAnimationDiagnostics.animation(
+            changesSize: changesSize,
+            changesPosition: changesPosition,
+            duration: duration
+        )
         let (ticker, ticks, animationStart) = try await MainActor.run {
             guard let ticker = DisplayRefreshTicker(displayID: displayID) else {
                 throw WindowActionError.screenNotFound
@@ -273,7 +284,7 @@ actor AccessibilityWindowController {
         var lastResizeCompletedTime: TimeInterval?
 
         do {
-            for await _ in ticks {
+            for await tick in ticks {
                 try checkCancellation(for: generation)
                 // The display callback may have been queued while AX was busy.
                 // Use processing time so the motion catches up without an idle first frame.
@@ -285,19 +296,29 @@ actor AccessibilityWindowController {
                 let progress = WindowFrameAnimation.easeOut(CGFloat(linearProgress))
                 let isFinalFrame = linearProgress >= 1
 
-                // Resizing makes the target application synchronously lay out its own
-                // content. Fast apps can update at 60 Hz; expensive layouts get more
-                // time between updates. Pure movement keeps the native refresh rate.
+                // AX replies do not indicate that the target app has presented a frame.
+                // This existing throttle uses call cost as a heuristic; diagnostics
+                // distinguish its skipped ticks from slow calls and display callbacks.
                 let updateStartedTime = ProcessInfo.processInfo.systemUptime
-                guard WindowFrameAnimation.shouldApplyUpdate(
+                let shouldApply = WindowFrameAnimation.shouldApplyUpdate(
                     at: updateStartedTime,
                     lastStartedAt: lastResizeStartedTime,
                     lastCompletedAt: lastResizeCompletedTime,
                     changesSize: changesSize,
                     isFinalFrame: isFinalFrame
-                ) else {
+                )
+                WindowAnimationDiagnostics.processedTick(
+                    timestamp: tick.timestamp,
+                    callbackTime: tick.callbackTime,
+                    processedAt: tickTime,
+                    skipped: !shouldApply
+                )
+                guard shouldApply else {
                     continue
                 }
+
+                let updateInterval = WindowAnimationDiagnostics.begin("FrameUpdate")
+                defer { WindowAnimationDiagnostics.end("FrameUpdate", updateInterval) }
 
                 let requestedFrame = WindowFrameAnimation.interpolate(
                     from: originalFrame,
@@ -366,12 +387,13 @@ actor AccessibilityWindowController {
                 )
                 if didApplyUpdate {
                     lastResizeStartedTime = updateStartedTime
-                    // AX mutations are synchronous. Measuring from their completion
-                    // guarantees the target app at least one frame without more layout.
+                    // Allow time after the synchronous AX reply. This does not guarantee
+                    // that the target app has finished layout or displayed its new size.
                     lastResizeCompletedTime = ProcessInfo.processInfo.systemUptime
                 }
 
                 if isFinalFrame {
+                    WindowAnimationDiagnostics.outcome("FinalFrameApplied")
                     break
                 }
             }
@@ -401,36 +423,15 @@ actor AccessibilityWindowController {
             && abs(lhs.y - rhs.y) <= tolerance
     }
 
-    private func disableEnhancedUserInterfaceIfNeeded(_ application: AXUIElement) -> Bool {
-        // This compatibility attribute is not available as a public SDK constant. Treat
-        // it as best-effort and restore the target application's original state afterward.
-        guard let wasEnabled: Bool = try? copyValue(
+    private func disableEnhancedUserInterfaceIfNeeded(
+        _ application: AXUIElement
+    ) -> AccessibilityBooleanOverride {
+        let originalValue: Bool? = try? copyValue(
             application,
             attribute: Self.enhancedUserInterfaceAttribute
-        ), wasEnabled else {
-            return false
-        }
-
-        let error = setBoolean(
-            application,
-            attribute: Self.enhancedUserInterfaceAttribute,
-            value: false
         )
-        if error == .success {
-            logger.debug("Temporarily disabled enhanced accessibility resizing")
-            return true
-        }
-        return false
-    }
-
-    private func restoreEnhancedUserInterface(_ application: AXUIElement) {
-        let error = setBoolean(
-            application,
-            attribute: Self.enhancedUserInterfaceAttribute,
-            value: true
-        )
-        if error != .success {
-            logger.debug("Unable to restore enhanced accessibility resizing")
+        return AccessibilityBooleanOverride(originalValue: originalValue, temporaryValue: false) { value in
+            setBoolean(application, attribute: Self.enhancedUserInterfaceAttribute, value: value)
         }
     }
 
@@ -439,16 +440,20 @@ actor AccessibilityWindowController {
         attribute: String,
         value: Bool
     ) -> AXError {
-        AXUIElementSetAttributeValue(
-            element,
-            attribute as CFString,
-            value ? kCFBooleanTrue : kCFBooleanFalse
-        )
+        WindowAnimationDiagnostics.measureAX("AXSetBoolean") {
+            AXUIElementSetAttributeValue(
+                element,
+                attribute as CFString,
+                value ? kCFBooleanTrue : kCFBooleanFalse
+            )
+        }
     }
 
     private func copyElement(_ element: AXUIElement, attribute: String) throws -> AXUIElement {
         var rawValue: CFTypeRef?
-        let error = AXUIElementCopyAttributeValue(element, attribute as CFString, &rawValue)
+        let error = WindowAnimationDiagnostics.measureAX("AXReadElement") {
+            AXUIElementCopyAttributeValue(element, attribute as CFString, &rawValue)
+        }
         guard error == .success else {
             if error == .noValue || error == .attributeUnsupported {
                 throw WindowActionError.noFocusedWindow
@@ -463,7 +468,9 @@ actor AccessibilityWindowController {
 
     private func copyValue<T>(_ element: AXUIElement, attribute: String) throws -> T {
         var rawValue: CFTypeRef?
-        let error = AXUIElementCopyAttributeValue(element, attribute as CFString, &rawValue)
+        let error = WindowAnimationDiagnostics.measureAX("AXReadValue") {
+            AXUIElementCopyAttributeValue(element, attribute as CFString, &rawValue)
+        }
         guard error == .success, let value = rawValue as? T else {
             throw WindowActionError.accessibilityFailure(error)
         }
@@ -472,7 +479,10 @@ actor AccessibilityWindowController {
 
     private func copyRawAXValue(_ element: AXUIElement, attribute: String) throws -> AXValue {
         var rawValue: CFTypeRef?
-        let error = AXUIElementCopyAttributeValue(element, attribute as CFString, &rawValue)
+        let name: StaticString = attribute == kAXSizeAttribute ? "AXReadSize" : "AXReadPosition"
+        let error = WindowAnimationDiagnostics.measureAX(name) {
+            AXUIElementCopyAttributeValue(element, attribute as CFString, &rawValue)
+        }
         guard error == .success, let rawValue, CFGetTypeID(rawValue) == AXValueGetTypeID() else {
             throw WindowActionError.accessibilityFailure(error)
         }
@@ -482,12 +492,9 @@ actor AccessibilityWindowController {
     private func copyFrame(_ element: AXUIElement) throws -> CGRect {
         let attributes = [kAXPositionAttribute, kAXSizeAttribute] as CFArray
         var rawValues: CFArray?
-        let error = AXUIElementCopyMultipleAttributeValues(
-            element,
-            attributes,
-            [],
-            &rawValues
-        )
+        let error = WindowAnimationDiagnostics.measureAX("AXReadFrame") {
+            AXUIElementCopyMultipleAttributeValues(element, attributes, [], &rawValues)
+        }
         guard error == .success,
               let values = rawValues as? [AXValue],
               values.count == 2 else {
@@ -537,7 +544,10 @@ actor AccessibilityWindowController {
 
     private func isSettable(_ element: AXUIElement, attribute: String) -> Bool {
         var settable = DarwinBoolean(false)
-        return AXUIElementIsAttributeSettable(element, attribute as CFString, &settable) == .success && settable.boolValue
+        let error = WindowAnimationDiagnostics.measureAX("AXIsSettable") {
+            AXUIElementIsAttributeSettable(element, attribute as CFString, &settable)
+        }
+        return error == .success && settable.boolValue
     }
 
     private func setPoint(_ element: AXUIElement, attribute: String, value: CGPoint) throws {
@@ -545,7 +555,9 @@ actor AccessibilityWindowController {
         guard let axValue = AXValueCreate(.cgPoint, &mutableValue) else {
             throw WindowActionError.unsupportedWindow
         }
-        let error = AXUIElementSetAttributeValue(element, attribute as CFString, axValue)
+        let error = WindowAnimationDiagnostics.measureAX("AXSetPosition") {
+            AXUIElementSetAttributeValue(element, attribute as CFString, axValue)
+        }
         guard error == .success else {
             throw WindowActionError.accessibilityFailure(error)
         }
@@ -556,7 +568,9 @@ actor AccessibilityWindowController {
         guard let axValue = AXValueCreate(.cgSize, &mutableValue) else {
             throw WindowActionError.unsupportedWindow
         }
-        let error = AXUIElementSetAttributeValue(element, attribute as CFString, axValue)
+        let error = WindowAnimationDiagnostics.measureAX("AXSetSize") {
+            AXUIElementSetAttributeValue(element, attribute as CFString, axValue)
+        }
         guard error == .success else {
             throw WindowActionError.accessibilityFailure(error)
         }

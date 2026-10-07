@@ -100,6 +100,8 @@ Unit tests cover geometry, animation, display coordinates, persistence, validati
 
 Accessibility control of third-party windows still requires manual testing because behavior depends on system permission and the target application. After tests, run `./Scripts/install-local.sh --no-open` to remove generated runner bundles and restore the canonical application registration.
 
+For opt-in local timing signposts, see [Window animation diagnostics](WINDOW_ANIMATION_DIAGNOSTICS.md).
+
 ## Continuous Integration
 
 GitHub Actions builds with warnings treated as errors, runs unit and UI/accessibility tests, builds the Release configuration, and verifies both `arm64` and `x86_64` slices. Pull requests and pushes to `main` run the same workflow.

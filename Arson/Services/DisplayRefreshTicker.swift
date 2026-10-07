@@ -2,11 +2,16 @@ import AppKit
 import CoreGraphics
 import QuartzCore
 
+struct DisplayRefreshTick: Sendable {
+    let timestamp: TimeInterval
+    let callbackTime: TimeInterval
+}
+
 @MainActor
 final class DisplayRefreshTicker: NSObject {
-    let ticks: AsyncStream<TimeInterval>
+    let ticks: AsyncStream<DisplayRefreshTick>
 
-    private let continuation: AsyncStream<TimeInterval>.Continuation
+    private let continuation: AsyncStream<DisplayRefreshTick>.Continuation
     private var displayLink: CADisplayLink?
     private var isStopped = false
 
@@ -23,7 +28,7 @@ final class DisplayRefreshTicker: NSObject {
         }
 
         let pair = AsyncStream.makeStream(
-            of: TimeInterval.self,
+            of: DisplayRefreshTick.self,
             bufferingPolicy: .bufferingNewest(1)
         )
         ticks = pair.stream
@@ -50,6 +55,16 @@ final class DisplayRefreshTicker: NSObject {
     }
 
     @objc private func displayLinkDidFire(_ displayLink: CADisplayLink) {
-        continuation.yield(displayLink.timestamp)
+        let tick = DisplayRefreshTick(
+            timestamp: displayLink.timestamp,
+            callbackTime: WindowAnimationDiagnostics.isEnabled ? CACurrentMediaTime() : 0
+        )
+        WindowAnimationDiagnostics.displayTick(
+            timestamp: displayLink.timestamp,
+            targetTimestamp: displayLink.targetTimestamp
+        )
+        if case .dropped = continuation.yield(tick) {
+            WindowAnimationDiagnostics.tickReplaced()
+        }
     }
 }
